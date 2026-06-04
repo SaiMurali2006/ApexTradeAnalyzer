@@ -431,9 +431,53 @@ ApexTradeAnalyzer/
 
 ---
 
+## 8b. Roadmap / Planned Goals
+
+Beyond the shipped core (steps 1–10), these are the next intended features. Keep the same conventions: integer money, UTC storage + exchange-tz bucketing, pure stat functions, token-only styling, local-first.
+
+### High priority (requested)
+
+1. **Trade Republic import.** Add a TR importer alongside `.tlg`/CSV. TR exports are PDF account statements (and per-execution data) rather than a clean fills CSV — so:
+   - Parse the TR statement/CSV into `Execution[]` (symbol via ISIN→ticker mapping, EUR amounts → minor units, buy/sell, qty, price, order fee).
+   - Handle TR specifics: ISIN identifiers (maintain an ISIN→symbol map; fall back to ISIN as the symbol), EUR base currency, fractional shares, and TR's `Sparplan`/savings-plan executions.
+   - Route through `detectFileType` → `parseTradeRepublic.ts` → existing `reconstructTrades` → preview → persist pipeline. Save a per-broker column/field mapping like the CSV path.
+
+2. **Cash flows: deposits & withdrawals.** Introduce a `CashFlow` record (`{ id, date, type: 'deposit'|'withdrawal', amount, account, note }`, amount in minor units, UTC date) persisted in its own Dexie table.
+   - **Starting balance becomes the seed** of an *account-balance* curve = startingBalance + Σ(cash flows) + Σ(realized PnL) over time.
+   - **Mark deposits/withdrawals on the equity/balance curve** as ECharts `markPoint`/`markLine` annotations (green ▲ deposit, amber ▼ withdrawal) with tooltips.
+   - Surface them everywhere relevant: on the **PnL calendar** (a small cash-flow badge on the day), in **Settings** (manage cash flows: add/edit/delete + import from broker), and in **% return / CAGR / drawdown** math (true time-weighted vs simple return — offer both; deposits must not count as "profit").
+   - Add a dedicated **Cash flow** view or a section in Settings to CRUD them, plus auto-detect deposits/withdrawals from broker imports where present.
+
+3. **True return metrics with external flows.** Once cash flows exist, compute **time-weighted return (TWR)** and **money-weighted return (IRR/XIRR)** so deposits/withdrawals don't distort performance. Show account balance over time (not just cumulative trade PnL), and base drawdown % on balance.
+
+### Medium priority (worth doing)
+
+4. **Tags / setups / notes editing** in the trade drawer, with persistence — then **tag & setup analytics** (PnL/win-rate by tag, already stubbed in `breakdowns.byTag`). Per-trade rating (1–5) and mistake tags feed a "leak finder" report.
+5. **Benchmark overlay** — compare the equity curve against an index (e.g. SPY/QQQ) to see if you're beating the market. Needs an optional price-series source (manual paste or a local CSV of index closes to stay offline-friendly).
+6. **MAE/MFE analytics** — the TradesViz signature scatter. Requires intratrade price data (per-trade OHLC around the hold). Add an optional price-series import so `priceMAE`/`priceMFE`/running-PnL can populate the drawer chart and the MAE/MFE scatter.
+7. **Goals & targets** — daily/weekly/monthly P&L or win-rate goals with progress widgets on the dashboard and a streak tracker.
+8. **Reports** — monthly/weekly summary cards; printable/exportable PDF or PNG of the dashboard.
+9. **Multi-account / consolidated view** — per-account filtering exists; add a combined net-worth/balance roll-up across accounts.
+10. **More broker presets** — saved auto-detect mappings for common brokers (Schwab, IBKR Flex CSV, Webull, Tastytrade, Binance) so import is one click.
+
+### Lower priority / nice-to-have
+
+11. **PWA / offline install** — installable app, offline cache (already local-first; add a manifest + service worker).
+12. **CSV/Excel export** of trades & stats (JSON export already exists).
+13. **Trade screenshots/attachments** stored in IndexedDB (chart snapshots per trade).
+14. **Position-sizing & risk calculator** (R-based) and a risk-of-ruin estimate.
+15. **Underwater (drawdown duration) chart** and rolling-metric charts (rolling win rate / expectancy).
+16. **Timezone-correct table & filters** — make the Trades table dates and the date-range filter use the exchange tz (currently UTC slices) for full consistency with calendar/charts.
+17. **Theme/responsive spec sync** — keep `Design.md` updated as the family's design (toggle component, bubble/visualMap pattern, off-canvas nav) evolves.
+
+> When implementing any of these, add a Changelog row and update the relevant `§5` view spec.
+
+---
+
 ## 9. Changelog
 
 | Date (UTC) | Change |
 |---|---|
+| 2026-06-04 | **Roadmap added (§8b).** Planned goals: Trade Republic import (ISIN/EUR), cash flows (deposit/withdrawal as a `CashFlow` table) marked on the equity/balance curve + calendar + return math, TWR/IRR, tag/notes editing + analytics, benchmark overlay, MAE/MFE via optional price data, goals/streaks, reports, multi-account roll-up, broker presets, PWA, exports, and tz-correct table/filters. Shipped since initial spec: commission/fee toggles, symbol bubble chart, hover-rail + mobile drawer nav, exchange-tz (Nasdaq) bucketing, README + Design.md. |
 | 2026-06-04 | **`.tlg` import.** Added IB TradeLog `.tlg` support: pipe-delimited, skip header sections + trailer, 16 cols (kept 1/2/6/8/10/12/13/14), record codes `O`/`C`/`C;O` (split reversals), sign-of-shares → action, floats → integer minor units. New `parseTlg.ts` + `detectFileType.ts`; same reconstruct→preview→persist pipeline as CSV (§5.5.1). |
 | 2026-06-04 | Initial spec. Defined product goal (local-first TradesViz-parity trade analyzer), zero-backend stack (Vite/React/TS/ECharts/Dexie), domain model (executions→trades), the ~100-metric statistics surface, six views (dashboard/calendar/trades/charts/import/settings), and the full Apex design-language web port (CSS `color-mix()` token system mirroring the desktop `Surface(accentPct,lift)` formula, light/dark/system + accent, typography/shape/border/spacing/motion scales, focus/scrollbar/icon rules, ECharts theming, anti-patterns). Design language ported from `otherCLAUDE.md` §§1–10; that file's non-UI/WPF content explicitly out of scope. |
