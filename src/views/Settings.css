@@ -26,6 +26,12 @@
 .apex-fut-table { width: 100%; border-collapse: collapse; font-size: 0.8125rem; }
 .apex-fut-table td { padding: 6px 0; border-bottom: 1px solid var(--line-soft); font-weight: 800; }
 
+.apex-cf-add { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 10px 0 12px; }
+.apex-cf-table { width: 100%; border-collapse: collapse; font-size: 0.8125rem; }
+.apex-cf-table td { padding: 6px 8px; border-bottom: 1px solid var(--line-soft); font-weight: 800; }
+.apex-cf-table td:first-child { padding-left: 0; }
+.apex-cf-note { color: var(--muted); font-weight: 700; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
 .apex-danger {
   background: var(--danger-soft) !important;
   border-color: var(--danger) !important;

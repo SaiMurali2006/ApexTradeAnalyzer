@@ -6,6 +6,9 @@ import { CURRENCIES, TIMEZONES, useSettings } from '@/store/useSettings';
 import { FUTURES_POINT_VALUE } from '@/domain/multipliers';
 import { useData } from '@/store/useData';
 import { allExecutions } from '@/store/db';
+import { formatMoney, toMinor } from '@/domain/money';
+import { netDeposits } from '@/stats/cashflow';
+import type { CashFlowType } from '@/domain/types';
 import './Settings.css';
 
 export function Settings() {
@@ -13,14 +16,38 @@ export function Settings() {
   const wipe = useData((st) => st.wipe);
   const reload = useData((st) => st.load);
   const trades = useData((st) => st.trades);
+  const cashFlows = useData((st) => st.cashFlows);
+  const addCashFlow = useData((st) => st.addCashFlow);
+  const removeCashFlow = useData((st) => st.removeCashFlow);
 
   const [newRoot, setNewRoot] = useState('');
   const [newVal, setNewVal] = useState('');
   const [confirmWipe, setConfirmWipe] = useState(false);
 
+  // cash flow form
+  const [cfDate, setCfDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [cfType, setCfType] = useState<CashFlowType>('deposit');
+  const [cfAmount, setCfAmount] = useState('');
+  const [cfNote, setCfNote] = useState('');
+
+  const submitCashFlow = useCallback(() => {
+    const amt = Number(cfAmount);
+    if (!cfDate || !Number.isFinite(amt) || amt <= 0) return;
+    void addCashFlow({
+      id: `cf-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`,
+      date: new Date(`${cfDate}T00:00:00Z`).toISOString(),
+      type: cfType,
+      amount: toMinor(amt),
+      account: '',
+      note: cfNote.trim() || undefined,
+    });
+    setCfAmount('');
+    setCfNote('');
+  }, [cfDate, cfType, cfAmount, cfNote, addCashFlow]);
+
   const exportJson = useCallback(async () => {
     const executions = await allExecutions();
-    const blob = new Blob([JSON.stringify({ exportedAt: new Date().toISOString(), settings: { currency: s.currency, timezone: s.timezone, startingBalance: s.startingBalance }, executions, trades }, null, 2)], {
+    const blob = new Blob([JSON.stringify({ exportedAt: new Date().toISOString(), settings: { currency: s.currency, timezone: s.timezone, startingBalance: s.startingBalance }, executions, trades, cashFlows }, null, 2)], {
       type: 'application/json',
     });
     const url = URL.createObjectURL(blob);
@@ -29,7 +56,7 @@ export function Settings() {
     a.download = `apex-export-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
-  }, [s.currency, s.timezone, s.startingBalance, trades]);
+  }, [s.currency, s.timezone, s.startingBalance, trades, cashFlows]);
 
   const doWipe = useCallback(async () => {
     await wipe();
@@ -113,6 +140,41 @@ export function Settings() {
             </table>
           )}
           <p className="apex-set-note">Re-import after changing to recompute affected futures trades.</p>
+        </Card>
+
+        <Card>
+          <div className="apex-set-label">CASH FLOWS</div>
+          <p className="apex-set-note" style={{ marginTop: 0 }}>
+            Net deposited: <span className="mono" style={{ fontWeight: 800, color: 'var(--text)' }}>{formatMoney(netDeposits(cashFlows), { signed: true })}</span>
+          </p>
+          <div className="apex-cf-add">
+            <input className="apex-field" type="date" value={cfDate} onChange={(e) => setCfDate(e.target.value)} />
+            <select className="apex-field" value={cfType} onChange={(e) => setCfType(e.target.value as CashFlowType)}>
+              <option value="deposit">Deposit</option>
+              <option value="withdrawal">Withdrawal</option>
+            </select>
+            <input className="apex-field mono" type="number" placeholder="Amount" value={cfAmount} onChange={(e) => setCfAmount(e.target.value)} style={{ width: 110 }} />
+            <input className="apex-field" placeholder="Note (optional)" value={cfNote} onChange={(e) => setCfNote(e.target.value)} style={{ flex: 1, minWidth: 120 }} />
+            <Button variant="primary" disabled={!cfDate || !(Number(cfAmount) > 0)} onClick={submitCashFlow}>Add</Button>
+          </div>
+          {cashFlows.length > 0 && (
+            <table className="mono apex-cf-table">
+              <tbody>
+                {[...cashFlows].reverse().map((cf) => (
+                  <tr key={cf.id}>
+                    <td>{cf.date.slice(0, 10)}</td>
+                    <td style={{ color: cf.type === 'deposit' ? 'var(--profit)' : 'var(--danger)', textTransform: 'capitalize' }}>{cf.type}</td>
+                    <td style={{ textAlign: 'right' }}>{formatMoney(cf.amount)}</td>
+                    <td className="apex-cf-note">{cf.note ?? ''}</td>
+                    <td style={{ textAlign: 'right' }}>
+                      <Button variant="icon" onClick={() => void removeCashFlow(cf.id)} aria-label="Delete">✕</Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+          <p className="apex-set-note">Deposits/withdrawals seed the account-balance curve and are marked on the dashboard equity chart and the calendar. They are excluded from PnL/profit.</p>
         </Card>
 
         <Card>

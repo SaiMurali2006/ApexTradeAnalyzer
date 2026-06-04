@@ -3,6 +3,7 @@ import type { EChartsOption } from 'echarts';
 import { useData } from '@/store/useData';
 import { applyFilters, useFilters } from '@/store/useFilters';
 import { dayMap, heatmapData, monthGrid, type DayCell } from '@/stats/calendar';
+import { flowByDay, type FlowMap } from '@/stats/cashflow';
 import { formatMoney, toMajor } from '@/domain/money';
 import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';
@@ -39,9 +40,11 @@ export function Calendar() {
   const tz = useSettings((s) => s.timezone);
   const includeCommission = useSettings((s) => s.includeCommission);
   const includeFees = useSettings((s) => s.includeFees);
+  const cashFlows = useData((s) => s.cashFlows);
   const adjusted = useMemo(() => adjustCosts(all, { includeCommission, includeFees }), [all, includeCommission, includeFees]);
   const trades = useMemo(() => applyFilters(adjusted, filters), [adjusted, filters]);
   const map = useMemo(() => dayMap(trades, tz), [trades, tz]);
+  const flowMap = useMemo(() => flowByDay(cashFlows), [cashFlows]);
 
   // default to most recent trade's month
   const latest = useMemo(() => {
@@ -157,7 +160,7 @@ export function Calendar() {
             <div className="apex-cal-dow" style={{ color: 'var(--accent)' }}>Week</div>
 
             {grid.weeks.map((week, wi) => (
-              <Week key={wi} week={week} weekPnl={grid.weekPnls[wi]} month={cursor.m} onPick={setDay} />
+              <Week key={wi} week={week} weekPnl={grid.weekPnls[wi]} month={cursor.m} flowMap={flowMap} onPick={setDay} />
             ))}
           </div>
         </Card>
@@ -173,6 +176,12 @@ export function Calendar() {
             <Button variant="icon" onClick={() => setDay(null)} aria-label="Close">✕</Button>
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            {(flowMap.get(day.date)?.flows ?? []).map((cf) => (
+              <span key={cf.id} className="apex-daychip mono" style={{ borderColor: cf.type === 'deposit' ? 'var(--profit)' : 'var(--danger)' }}>
+                <span>{cf.type === 'deposit' ? '▲ Deposit' : '▼ Withdrawal'}</span>
+                <span style={{ color: cf.type === 'deposit' ? 'var(--profit)' : 'var(--danger)' }}>{formatMoney(cf.amount)}</span>
+              </span>
+            ))}
             {day.trades.map((t) => (
               <button key={t.id} className="apex-daychip mono" onClick={() => setActiveTrade(t)}>
                 <span>{t.symbol}</span>
@@ -188,22 +197,27 @@ export function Calendar() {
   );
 }
 
-function Week({ week, weekPnl, month, onPick }: { week: (DayCell | null)[]; weekPnl: number; month: number; onPick: (c: DayCell) => void }) {
+function Week({ week, weekPnl, month, flowMap, onPick }: { week: (DayCell | null)[]; weekPnl: number; month: number; flowMap: FlowMap; onPick: (c: DayCell) => void }) {
   return (
     <>
       {week.map((cell, i) => {
         if (!cell) return <div key={i} className="apex-cal-cell apex-cal-cell--empty" />;
         const inMonth = Number(cell.date.slice(5, 7)) - 1 === month;
         const dayNum = Number(cell.date.slice(8, 10));
+        const flow = flowMap.get(cell.date);
+        const clickable = cell.count > 0 || !!flow;
         return (
           <button
             key={i}
             className="apex-cal-cell"
             style={{ ...cellTone(cell.pnl, cell.count), opacity: inMonth ? 1 : 0.4 }}
-            onClick={() => cell.count && onPick(cell)}
-            disabled={!cell.count}
+            onClick={() => clickable && onPick(cell)}
+            disabled={!clickable}
           >
-            <span className="apex-cal-daynum">{dayNum}</span>
+            <span className="apex-cal-daynum">
+              {dayNum}
+              {flow && <span className="apex-cal-flow" style={{ background: flow.net >= 0 ? 'var(--profit)' : 'var(--danger)' }} title={flow.net >= 0 ? 'Deposit' : 'Withdrawal'} />}
+            </span>
             {cell.count > 0 && (
               <>
                 <span className="apex-cal-pnl mono">{formatMoney(cell.pnl, { signed: true })}</span>

@@ -1,6 +1,6 @@
 // IndexedDB persistence via Dexie (CLAUDE.md §2). On-device only.
 import Dexie, { type Table } from 'dexie';
-import type { Execution, Trade } from '@/domain/types';
+import type { CashFlow, Execution, Trade } from '@/domain/types';
 
 export interface StoredExecution extends Execution {
   hash: string; // dedupe key on re-import
@@ -9,12 +9,16 @@ export interface StoredExecution extends Execution {
 class ApexDB extends Dexie {
   executions!: Table<StoredExecution, string>;
   trades!: Table<Trade, string>;
+  cashFlows!: Table<CashFlow, string>;
 
   constructor() {
     super('apex-trade-analyzer');
     this.version(1).stores({
       executions: 'hash, symbol, account, assetType, timestamp',
       trades: 'id, symbol, account, assetType, openDate, closeDate',
+    });
+    this.version(2).stores({
+      cashFlows: 'id, date, type, account',
     });
   }
 }
@@ -51,9 +55,22 @@ export async function allTrades(): Promise<Trade[]> {
   return db.trades.orderBy('openDate').toArray();
 }
 
+export async function allCashFlows(): Promise<CashFlow[]> {
+  return db.cashFlows.orderBy('date').toArray();
+}
+
+export async function putCashFlow(cf: CashFlow): Promise<void> {
+  await db.cashFlows.put(cf);
+}
+
+export async function deleteCashFlow(id: string): Promise<void> {
+  await db.cashFlows.delete(id);
+}
+
 export async function wipeAll(): Promise<void> {
-  await db.transaction('rw', db.executions, db.trades, async () => {
+  await db.transaction('rw', db.executions, db.trades, db.cashFlows, async () => {
     await db.executions.clear();
     await db.trades.clear();
+    await db.cashFlows.clear();
   });
 }

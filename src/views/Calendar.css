@@ -35,7 +35,8 @@
 .apex-cal-cell:disabled { cursor: default; }
 .apex-cal-cell--empty { border: none; background: transparent; }
 
-.apex-cal-daynum { font-size: 0.75rem; font-weight: 800; color: var(--text); }
+.apex-cal-daynum { font-size: 0.75rem; font-weight: 800; color: var(--text); display: inline-flex; align-items: center; gap: 4px; }
+.apex-cal-flow { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
 .apex-cal-pnl { font-size: 0.8125rem; font-weight: 800; margin-top: auto; }
 .apex-cal-count { font-size: 0.625rem; color: var(--muted); }
 

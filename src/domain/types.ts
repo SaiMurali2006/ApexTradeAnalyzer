@@ -4,6 +4,16 @@
 export type AssetType = 'stock' | 'future' | 'option' | 'forex' | 'crypto' | 'index';
 export type Side = 'long' | 'short';
 export type Action = 'buy' | 'sell';
+export type CashFlowType = 'deposit' | 'withdrawal';
+
+export interface CashFlow {
+  id: string;
+  date: string; // UTC ISO-8601 (midnight ok)
+  type: CashFlowType;
+  amount: number; // minor units, positive magnitude
+  account: string;
+  note?: string;
+}
 
 export interface Execution {
   id: string;
