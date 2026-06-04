@@ -1,6 +1,7 @@
 .apex-logo-wrap { position: relative; }
 
 .apex-logo {
+  flex: none;
   width: 36px;
   height: 36px;
   border-radius: var(--r-ctl);

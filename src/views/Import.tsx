@@ -1,3 +1,5 @@
+// Import: drag-drop .tlg / CSV, auto-detect format, reconstruct trades, preview with
+// warnings, then commit to IndexedDB (deduped). Same pipeline for both file types.
 import { useCallback, useRef, useState } from 'react';
 import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';

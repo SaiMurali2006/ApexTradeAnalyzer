@@ -1,3 +1,5 @@
+// Calendar: month grid (daily P&L tints + weekly summary) and a year heatmap, with
+// cash-flow badges. Click a day to drill into its trades and deposits/withdrawals.
 import { useMemo, useState } from 'react';
 import type { EChartsOption } from 'echarts';
 import { useData } from '@/store/useData';

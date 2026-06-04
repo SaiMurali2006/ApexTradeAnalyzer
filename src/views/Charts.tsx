@@ -1,3 +1,5 @@
+// Charts: symbol-performance bubble chart plus PnL distribution, drawdown, and
+// breakdowns by day-of-week / hour / symbol / asset. Click a bar or bubble to filter.
 import { useMemo } from 'react';
 import type { EChartsOption } from 'echarts';
 import { useData } from '@/store/useData';

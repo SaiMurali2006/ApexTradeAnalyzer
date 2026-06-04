@@ -1,3 +1,5 @@
+// Settings: currency, exchange timezone, starting balance, commission/fee toggles,
+// futures point-value overrides, cash-flow management, and JSON export / data wipe.
 import { useCallback, useState } from 'react';
 import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';

@@ -1,4 +1,5 @@
-// Overall Statistics panel (CLAUDE.md §4). Dense grouped table of every metric.
+// Overall Statistics panel (CLAUDE.md §4). Renders the full metric set as four
+// grouped cards: Performance, Risk-adjusted, Drawdown & volatility, Duration.
 import type { OverallStats } from '@/stats/overall';
 import { formatMoney, formatPct } from '@/domain/money';
 import { Card } from './Card';

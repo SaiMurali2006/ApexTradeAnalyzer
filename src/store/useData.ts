@@ -1,4 +1,6 @@
 // Global data store (CLAUDE.md §2/§7). Holds reconstructed trades; reloads from IndexedDB.
+// Primary data store: reconstructed trades + cash flows, backed by IndexedDB.
+// Importing executions rebuilds the full trade set; mutations re-read from the db.
 import { create } from 'zustand';
 import type { CashFlow, Execution, Trade } from '@/domain/types';
 import { reconstructTrades } from '@/domain/reconstructTrades';

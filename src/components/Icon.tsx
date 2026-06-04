@@ -1,4 +1,5 @@
-// Stroke-based vector icons (CLAUDE.md §6.9). 16x16 viewBox, 1.5 stroke, currentColor.
+// Stroke-based vector icons (CLAUDE.md §6.9). 16x16 viewBox, 1.5 stroke, currentColor
+// so they inherit text color + theme. (Settings uses a richer 24-viewBox gear.)
 import type { CSSProperties } from 'react';
 
 type IconProps = { size?: number; style?: CSSProperties };

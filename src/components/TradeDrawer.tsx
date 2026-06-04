@@ -4,6 +4,8 @@ import { formatMoney, formatPct, toMajor } from '@/domain/money';
 import { Button } from './Button';
 import './TradeDrawer.css';
 
+// Right-side slide-in panel showing a single trade in full: PnL, return, entry/exit,
+// costs, duration, and every constituent execution. Close on scrim/Escape.
 function fmtPrice(minor: number) {
   return toMajor(minor).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 });
 }

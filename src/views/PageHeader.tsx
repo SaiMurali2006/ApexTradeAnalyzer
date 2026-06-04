@@ -1,3 +1,4 @@
+// Standard view header: optional accent eyebrow chip, title, and right-aligned actions.
 import type { ReactNode } from 'react';
 
 export function PageHeader({ eyebrow, title, actions }: { eyebrow?: string; title: string; actions?: ReactNode }) {

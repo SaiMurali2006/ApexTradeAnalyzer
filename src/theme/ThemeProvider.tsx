@@ -59,6 +59,7 @@ function apply(mode: Mode, accent: string): void {
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [{ mode, accent }, setState] = useState(load);
 
+  // apply on first mount + persist on change
   useEffect(() => {
     apply(mode, accent);
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ mode, accent }));
@@ -76,8 +77,19 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const value: ThemeState = {
     mode,
     accent,
-    setMode: (m) => setState((s) => ({ ...s, mode: m })),
-    setAccent: (hex) => isValidHex(hex) && setState((s) => ({ ...s, accent: normalizeHex(hex) })),
+    // Apply to :root synchronously in the handler so the new CSS vars are live
+    // BEFORE children re-render — otherwise canvas charts (which read tokens in
+    // their own effects, run child-first) would re-register with the old palette.
+    setMode: (m) => {
+      apply(m, accent);
+      setState((s) => ({ ...s, mode: m }));
+    },
+    setAccent: (hex) => {
+      if (!isValidHex(hex)) return;
+      const next = normalizeHex(hex);
+      apply(mode, next);
+      setState((s) => ({ ...s, accent: next }));
+    },
   };
 
   return <ThemeCtx.Provider value={value}>{children}</ThemeCtx.Provider>;

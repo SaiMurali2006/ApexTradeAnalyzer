@@ -4,6 +4,8 @@ import { useFilters } from '@/store/useFilters';
 import { Button } from './Button';
 import './FilterBar.css';
 
+// Global filter controls (symbol, date range, account, asset, side, outcome).
+// Writes to the shared filter store, so it drives every view at once.
 const ASSETS = ['all', 'stock', 'option', 'future', 'forex', 'crypto', 'index'] as const;
 const SIDES = ['all', 'long', 'short'] as const;
 const OUTCOMES = ['all', 'win', 'loss'] as const;

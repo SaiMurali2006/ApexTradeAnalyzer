@@ -1,3 +1,5 @@
+// Trades: sortable, filterable table of reconstructed round-trip trades. Row click
+// opens the detail drawer. Respects global filters + commission/fee settings.
 import { useMemo, useState } from 'react';
 import { useData } from '@/store/useData';
 import { applyFilters, useFilters } from '@/store/useFilters';

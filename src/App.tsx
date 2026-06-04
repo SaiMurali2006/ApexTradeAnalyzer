@@ -1,3 +1,5 @@
+// Root: loads persisted data on mount, applies settings (currency, futures overrides)
+// to the math/format modules, and renders the routed views inside the app shell.
 import { useEffect } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { AppShell } from './components/AppShell';

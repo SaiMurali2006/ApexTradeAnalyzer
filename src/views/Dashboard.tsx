@@ -1,3 +1,6 @@
+// Dashboard: hero stat tiles, the equity/account-balance curve (with deposit/
+// withdrawal markers when cash flows exist), and the full Overall Statistics grid.
+// All driven by the global filters + cost/timezone settings.
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { EChartsOption } from 'echarts';

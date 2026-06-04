@@ -1,6 +1,8 @@
 import type { HTMLAttributes, ReactNode } from 'react';
 import './Card.css';
 
+// Surface primitives. `Card` is the base panel (optional hover-lift); `StatCard`
+// is a labelled metric tile with a large monospace, tone-colored value.
 interface CardProps extends HTMLAttributes<HTMLDivElement> {
   hover?: boolean;
 }

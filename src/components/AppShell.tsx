@@ -13,6 +13,8 @@ import {
 } from './Icon';
 import './AppShell.css';
 
+// App frame: hover-expand icon rail on desktop, off-canvas drawer + top bar on
+// mobile. Renders the logo/theme entry, primary nav, and the routed content.
 const NAV = [
   { to: '/dashboard', label: 'Dashboard', Icon: IconDashboard },
   { to: '/calendar', label: 'Calendar', Icon: IconCalendar },
