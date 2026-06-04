@@ -1,0 +1,24 @@
+.apex-filterbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  padding: 12px;
+  background: var(--panel);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-panel);
+  margin-bottom: 12px;
+}
+
+.apex-field {
+  background: var(--input);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-ctl);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 0.8125rem;
+  padding: 8px 10px;
+}
+.apex-field:focus { border-color: var(--accent); outline: none; }
+.apex-field::placeholder { color: var(--muted); }

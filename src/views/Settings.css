@@ -1,0 +1,58 @@
+.apex-set-label {
+  font-size: 0.625rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 12px;
+}
+
+.apex-set-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  font-weight: 700;
+  font-size: 0.875rem;
+  border-bottom: 1px solid var(--line-soft);
+}
+.apex-set-row:last-of-type { border-bottom: none; }
+
+.apex-set-note { color: var(--muted); font-size: 0.75rem; font-weight: 700; margin: 12px 0 0; line-height: 1.5; }
+
+.apex-fut-add { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; }
+
+.apex-fut-table { width: 100%; border-collapse: collapse; font-size: 0.8125rem; }
+.apex-fut-table td { padding: 6px 0; border-bottom: 1px solid var(--line-soft); font-weight: 800; }
+
+.apex-danger {
+  background: var(--danger-soft) !important;
+  border-color: var(--danger) !important;
+  color: var(--danger) !important;
+}
+.apex-danger:hover { background: var(--danger) !important; color: var(--on-accent) !important; }
+
+/* iOS-style toggle */
+.apex-toggle {
+  width: 44px;
+  height: 26px;
+  border-radius: 999px;
+  border: 1px solid var(--line-soft);
+  background: var(--input);
+  padding: 2px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: background 0.22s ease, border-color 0.22s ease;
+}
+.apex-toggle.is-on { background: var(--accent); border-color: var(--accent-alt); }
+.apex-toggle__knob {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--text);
+  transition: transform 0.3s var(--ease-bounce), background 0.22s ease;
+}
+.apex-toggle.is-on .apex-toggle__knob { transform: translateX(18px); background: var(--on-accent); }
+.apex-toggle:active .apex-toggle__knob { width: 24px; }

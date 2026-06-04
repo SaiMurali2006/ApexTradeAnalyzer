@@ -1,0 +1,201 @@
+/* Desktop: a thin icon rail that expands on hover/focus. The grid reserves only
+   the collapsed width, so the expanded sidebar overlays content (no reflow). */
+.apex-shell {
+  position: relative;
+  display: grid;
+  grid-template-columns: 76px 1fr;
+  height: 100%;
+  padding: 12px;
+  gap: 12px;
+}
+
+/* mobile top bar — hidden on desktop */
+.apex-topbar { display: none; }
+.apex-burger,
+.apex-nav-close { display: none; }
+.apex-nav-scrim { display: none; }
+
+.apex-sidebar {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  bottom: 12px;
+  width: 64px;
+  z-index: 60;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r-shell);
+  padding: 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  overflow: hidden;
+  transition: width 0.34s var(--ease-bounce), box-shadow 0.34s ease;
+}
+.apex-sidebar:hover {
+  width: 236px;
+  box-shadow: 0 18px 50px color-mix(in srgb, black 32%, transparent);
+}
+
+.apex-brand { display: flex; align-items: center; gap: 12px; min-height: 36px; }
+.apex-brand__text {
+  overflow: hidden;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateX(-6px);
+  transition: opacity 0.2s ease, transform 0.3s var(--ease-bounce);
+}
+.apex-sidebar:hover .apex-brand__text { opacity: 1; transform: none; }
+.apex-brand__title { font-weight: 900; font-size: 1.0625rem; }
+.apex-brand__tag { font-weight: 700; font-size: 0.6875rem; color: var(--muted); }
+
+.apex-nav { display: flex; flex-direction: column; gap: 4px; }
+.apex-navlink {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 10px;
+  border-radius: var(--r-ctl);
+  color: var(--muted);
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 0.875rem;
+  border: 1px solid transparent;
+  white-space: nowrap;
+  transition: background 0.18s ease, color 0.18s ease, transform 0.26s var(--ease-bounce);
+}
+/* label hidden while collapsed, fades in on expand */
+.apex-navlink span {
+  opacity: 0;
+  transform: translateX(-6px);
+  transition: opacity 0.2s ease, transform 0.3s var(--ease-bounce);
+}
+.apex-sidebar:hover .apex-navlink span { opacity: 1; transform: none; }
+.apex-navlink:hover { background: var(--card-hover); color: var(--text); }
+.apex-navlink.active {
+  background: var(--accent-soft);
+  color: var(--text);
+  border-color: var(--accent-soft);
+}
+.apex-navlink.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 18px;
+  border-radius: 0 3px 3px 0;
+  background: var(--accent);
+}
+.apex-navlink:active { transform: scale(0.97); }
+.apex-navlink svg { flex: none; }
+
+.apex-main {
+  grid-column: 2;
+  background: var(--bg-alt);
+  border: 1px solid var(--line);
+  border-radius: var(--r-shell);
+  padding: 22px;
+  overflow: auto;
+}
+
+@keyframes apex-view-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+.apex-view { animation: apex-view-in 0.28s ease both; }
+
+/* ============ MOBILE ============ */
+@media (max-width: 860px) {
+  .apex-shell {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+    padding: 10px;
+    gap: 10px;
+  }
+
+  .apex-topbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--r-panel);
+    padding: 10px 12px;
+  }
+  .apex-topbar__title { font-weight: 900; font-size: 1rem; flex: 1; }
+
+  .apex-burger {
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    border-radius: var(--r-icon);
+    background: var(--input);
+    border: 1px solid var(--line-soft);
+    color: var(--text);
+    cursor: pointer;
+    transition: transform 0.26s var(--ease-bounce), background 0.18s ease;
+  }
+  .apex-burger:hover { background: var(--card-hover); }
+  .apex-burger:active { transform: scale(0.88); }
+
+  /* sidebar becomes a full off-canvas drawer (no hover-collapse on touch) */
+  .apex-sidebar,
+  .apex-sidebar:hover,
+  .apex-sidebar:focus-within {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: min(280px, 84vw);
+    z-index: 120;
+    padding: 16px;
+    border-radius: 0 var(--r-shell) var(--r-shell) 0;
+    transform: translateX(-104%);
+    transition: transform 0.42s var(--ease-bounce);
+    box-shadow: 0 24px 60px color-mix(in srgb, black 45%, transparent);
+  }
+  .is-navopen .apex-sidebar { transform: translateX(0); }
+
+  /* labels + brand text always visible in the drawer */
+  .apex-navlink span,
+  .apex-brand__text { opacity: 1; transform: none; }
+
+  .apex-nav-scrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 110;
+    background: color-mix(in srgb, black 45%, transparent);
+    animation: apex-fade-scrim 0.18s ease;
+  }
+  @keyframes apex-fade-scrim { from { opacity: 0; } to { opacity: 1; } }
+
+  .apex-nav-close {
+    display: grid;
+    place-items: center;
+    margin-left: auto;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--r-icon);
+    background: var(--input);
+    border: 1px solid var(--line-soft);
+    color: var(--muted);
+    cursor: pointer;
+  }
+  .apex-nav-close:active { transform: scale(0.85); }
+
+  /* bigger touch targets in the drawer */
+  .apex-navlink { padding: 13px 14px; font-size: 0.9375rem; }
+  .apex-navlink.active::before { left: -14px; }
+
+  .apex-main { grid-column: 1; padding: 16px; }
+}
+
+@media (max-width: 420px) {
+  .apex-main { padding: 12px; }
+  .apex-topbar__title { font-size: 0.9375rem; }
+}

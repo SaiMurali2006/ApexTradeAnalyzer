@@ -1,0 +1,36 @@
+/* Apex buttons (CLAUDE.md §6.7 motion, §6.4 radius). Press scales down then springs back. */
+.apex-btn {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 0.875rem;
+  border-radius: var(--r-ctl);
+  padding: 9px 16px;
+  cursor: pointer;
+  border: 1px solid var(--line-soft);
+  background: var(--input);
+  color: var(--text);
+  transition: transform 0.36s var(--ease-bounce), background 0.18s ease, border-color 0.18s ease;
+  user-select: none;
+}
+.apex-btn:active { transform: scale(0.9); transition: transform 0.08s var(--ease-press); }
+
+.apex-btn--ghost:hover { background: var(--card-hover); border-color: var(--accent); }
+
+.apex-btn--primary {
+  background: var(--accent);
+  border-color: var(--accent-alt);
+  color: var(--on-accent);
+}
+.apex-btn--primary:hover { background: color-mix(in srgb, white 10%, var(--accent)); }
+
+.apex-btn--icon {
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--r-icon);
+  display: inline-grid;
+  place-items: center;
+  color: var(--muted);
+}
+.apex-btn--icon:hover { color: var(--accent); background: var(--card-hover); }
+.apex-btn--icon:active { transform: scale(0.82); }

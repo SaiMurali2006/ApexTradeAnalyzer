@@ -1,0 +1,82 @@
+.apex-cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.apex-cal-title { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.apex-cal-monthpnl { font-size: 0.8125rem; font-weight: 800; }
+
+.apex-cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr) 0.7fr;
+  gap: 6px;
+}
+.apex-cal-dow {
+  text-align: center;
+  font-size: 0.625rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding-bottom: 4px;
+}
+
+.apex-cal-cell {
+  aspect-ratio: 1 / 0.82;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-icon);
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: transform 0.22s var(--ease-bounce), border-color 0.18s ease;
+  text-align: left;
+}
+.apex-cal-cell:not(:disabled):hover { transform: translateY(-3px); border-color: var(--accent); }
+.apex-cal-cell:disabled { cursor: default; }
+.apex-cal-cell--empty { border: none; background: transparent; }
+
+.apex-cal-daynum { font-size: 0.75rem; font-weight: 800; color: var(--text); }
+.apex-cal-pnl { font-size: 0.8125rem; font-weight: 800; margin-top: auto; }
+.apex-cal-count { font-size: 0.625rem; color: var(--muted); }
+
+.apex-cal-week {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding-right: 4px;
+}
+
+.apex-daychip {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  background: var(--input);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-pill);
+  padding: 6px 10px;
+  cursor: pointer;
+  font-weight: 800;
+  font-size: 0.75rem;
+  color: var(--text);
+  transition: transform 0.2s var(--ease-bounce), border-color 0.18s ease;
+}
+.apex-daychip:hover { border-color: var(--accent); transform: translateY(-2px); }
+
+@media (max-width: 640px) {
+  .apex-cal-grid { gap: 3px; grid-template-columns: repeat(7, 1fr) 0.8fr; }
+  .apex-cal-cell { padding: 4px; border-radius: var(--r-pill); aspect-ratio: 1 / 1; gap: 1px; }
+  .apex-cal-daynum { font-size: 0.625rem; }
+  .apex-cal-pnl { font-size: 0.5625rem; }
+  .apex-cal-count { display: none; }
+  .apex-cal-dow { font-size: 0.5rem; }
+  .apex-cal-week { font-size: 0.5625rem; padding-right: 2px; }
+}
+
+@media (max-width: 420px) {
+  /* drop the weekly summary column entirely on the smallest screens */
+  .apex-cal-grid { grid-template-columns: repeat(7, 1fr); }
+  .apex-cal-dow:last-child,
+  .apex-cal-week { display: none; }
+}

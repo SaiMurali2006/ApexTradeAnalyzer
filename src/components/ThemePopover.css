@@ -1,0 +1,97 @@
+.apex-logo-wrap { position: relative; }
+
+.apex-logo {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--r-ctl);
+  background: var(--accent);
+  border: 1.4px solid var(--accent-alt);
+  color: var(--on-accent);
+  font-weight: 900;
+  font-size: 18px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--accent) 35%, transparent);
+  transition: transform 0.18s var(--ease-bounce);
+}
+.apex-logo:hover { transform: scale(1.06); }
+
+.apex-popover {
+  position: absolute;
+  top: 44px;
+  left: 0;
+  z-index: 50;
+  width: 286px;
+  padding: 14px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  box-shadow: 0 18px 40px color-mix(in srgb, black 35%, transparent);
+  animation: apex-pop 0.26s var(--ease-bounce);
+}
+@keyframes apex-pop { from { transform: scale(0.96); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+.apex-popover__label {
+  font-size: 0.625rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin: 8px 0 6px;
+}
+.apex-popover__label:first-child { margin-top: 0; }
+
+.apex-segmented {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3px;
+  background: var(--input);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-icon);
+  padding: 3px;
+}
+.apex-segment {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 0.75rem;
+  padding: 6px;
+  border-radius: var(--r-pill);
+  cursor: pointer;
+  transition: transform 0.3s var(--ease-bounce);
+}
+.apex-segment.is-active { background: var(--accent); color: var(--on-accent); }
+.apex-segment:active { transform: scale(0.92); }
+
+.apex-swatches { display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px; }
+.apex-swatch {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--r-pill);
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform 0.18s var(--ease-bounce);
+}
+.apex-swatch:hover { transform: scale(1.12); }
+.apex-swatch.is-active { border-color: var(--text); }
+
+.apex-hexrow { display: flex; gap: 8px; align-items: center; margin-top: 10px; }
+.apex-hex-preview {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--r-icon);
+  border: 1px solid var(--line-soft);
+  flex: none;
+}
+.apex-hex-input {
+  flex: 1;
+  background: var(--input);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-ctl);
+  color: var(--text);
+  font-weight: 700;
+  padding: 8px 10px;
+}
+.apex-hex-input:focus { border-color: var(--accent); outline: none; }
+.apex-hex-error { color: var(--danger); font-size: 0.75rem; margin-top: 6px; }

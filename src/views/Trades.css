@@ -1,0 +1,22 @@
+.apex-table-wrap { overflow: auto; max-height: calc(100vh - 280px); }
+
+.apex-table { width: 100%; border-collapse: collapse; font-size: 0.8125rem; }
+.apex-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--input);
+  color: var(--muted);
+  font-weight: 800;
+  text-align: left;
+  padding: 10px 14px;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--line-soft);
+  user-select: none;
+}
+.apex-table th.num, .apex-table td.num { text-align: right; }
+.apex-table tbody td { padding: 9px 14px; border-bottom: 1px solid var(--line-soft); }
+.apex-table tbody tr { cursor: pointer; transition: background 0.12s ease; }
+.apex-table tbody tr:hover { background: var(--card-hover); }
+.apex-table td.long { color: var(--profit); text-transform: capitalize; }
+.apex-table td.short { color: var(--danger); text-transform: capitalize; }
