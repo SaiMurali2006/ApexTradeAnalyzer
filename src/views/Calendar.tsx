@@ -10,6 +10,8 @@ import { formatMoney, toMajor } from '@/domain/money';
 import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';
 import { ChartCard } from '@/components/ChartCard';
+import { EmptyState } from '@/components/EmptyState';
+import { IconCalendar } from '@/components/Icon';
 import { FilterBar } from '@/components/FilterBar';
 import { TradeDrawer } from '@/components/TradeDrawer';
 import { PageHeader } from './PageHeader';
@@ -112,9 +114,7 @@ export function Calendar() {
     return (
       <>
         <PageHeader eyebrow="Calendar" title="PnL Calendar" />
-        <Card style={{ minHeight: 200, display: 'grid', placeItems: 'center', color: 'var(--muted)' }}>
-          No trades yet — import a .tlg or CSV file.
-        </Card>
+        <EmptyState icon={<IconCalendar size={26} />} title="No trades yet" body="Import a .tlg or CSV file to light up your PnL calendar." />
       </>
     );
   }

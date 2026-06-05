@@ -4,10 +4,12 @@
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { EChartsOption } from 'echarts';
-import { Card, StatCard } from '@/components/Card';
+import { StatCard } from '@/components/Card';
 import { Button } from '@/components/Button';
 import { ChartCard } from '@/components/ChartCard';
 import { StatGrid } from '@/components/StatGrid';
+import { EmptyState } from '@/components/EmptyState';
+import { IconImport } from '@/components/Icon';
 import { FilterBar } from '@/components/FilterBar';
 import { PageHeader } from './PageHeader';
 import { useData } from '@/store/useData';
@@ -81,10 +83,13 @@ export function Dashboard() {
   if (all.length === 0) {
     return (
       <>
-        <PageHeader eyebrow="Overview" title="Dashboard" actions={<Button variant="primary" onClick={() => nav('/import')}>Import trades</Button>} />
-        <Card style={{ minHeight: 220, display: 'grid', placeItems: 'center', color: 'var(--muted)' }}>
-          No data yet — import a .tlg or CSV file to populate your dashboard.
-        </Card>
+        <PageHeader eyebrow="Overview" title="Dashboard" />
+        <EmptyState
+          icon={<IconImport size={26} />}
+          title="No data yet"
+          body="Import an Interactive Brokers .tlg or any broker CSV to populate your dashboard — equity curve, calendar, and ~35 metrics."
+          action={<Button variant="primary" onClick={() => nav('/import')}>Import trades</Button>}
+        />
       </>
     );
   }

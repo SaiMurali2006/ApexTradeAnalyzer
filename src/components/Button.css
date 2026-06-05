@@ -9,7 +9,7 @@
   border: 1px solid var(--line-soft);
   background: var(--input);
   color: var(--text);
-  transition: transform 0.36s var(--ease-bounce), background 0.18s ease, border-color 0.18s ease;
+  transition: transform 0.36s var(--ease-bounce), background 0.18s ease, border-color 0.18s ease, box-shadow 0.22s ease;
   user-select: none;
 }
 .apex-btn:active { transform: scale(0.9); transition: transform 0.08s var(--ease-press); }
@@ -21,7 +21,10 @@
   border-color: var(--accent-alt);
   color: var(--on-accent);
 }
-.apex-btn--primary:hover { background: color-mix(in srgb, white 10%, var(--accent)); }
+.apex-btn--primary:hover {
+  background: color-mix(in srgb, white 10%, var(--accent));
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--accent) 38%, transparent);
+}
 
 .apex-btn--icon {
   padding: 0;

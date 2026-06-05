@@ -23,7 +23,8 @@ export function StatCard({ label, value, sub, tone = 'default' }: StatCardProps)
   return (
     <Card hover className="apex-statcard">
       <div className="apex-statcard__label">{label}</div>
-      <div className="apex-statcard__value mono" style={{ color }}>{value}</div>
+      {/* keyed on value so it replays the refresh pulse when the number changes */}
+      <div key={String(value)} className="apex-statcard__value mono" style={{ color }}>{value}</div>
       {sub != null && <div className="apex-statcard__sub mono">{sub}</div>}
     </Card>
   );

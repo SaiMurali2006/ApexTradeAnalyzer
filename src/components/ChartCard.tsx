@@ -26,7 +26,22 @@ export function ChartCard({ title, option, height = 300, events }: Props) {
 
   return (
     <Card>
-      {title && <div style={{ fontWeight: 800, fontSize: '0.75rem', letterSpacing: '0.04em', color: 'var(--muted)', textTransform: 'uppercase', marginBottom: 12 }}>{title}</div>}
+      {title && (
+        <div
+          style={{
+            fontWeight: 800,
+            fontSize: '0.75rem',
+            letterSpacing: '0.04em',
+            color: 'var(--muted)',
+            textTransform: 'uppercase',
+            marginBottom: 12,
+            paddingBottom: 10,
+            borderBottom: '1px solid var(--line-soft)',
+          }}
+        >
+          {title}
+        </div>
+      )}
       <ReactECharts key={key} theme={APEX_THEME} option={option} style={{ height }} notMerge lazyUpdate onEvents={events} />
     </Card>
   );

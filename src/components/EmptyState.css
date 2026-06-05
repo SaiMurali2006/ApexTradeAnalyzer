@@ -1,0 +1,29 @@
+.apex-empty {
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-align: center;
+  padding: 40px 22px;
+}
+.apex-empty__icon {
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-panel);
+  color: var(--accent);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-soft);
+  margin-bottom: 4px;
+  animation: apex-empty-pop 0.5s var(--ease-bounce) both;
+}
+@keyframes apex-empty-pop {
+  from { opacity: 0; transform: scale(0.6); }
+  to { opacity: 1; transform: scale(1); }
+}
+.apex-empty__title { font-weight: 900; font-size: 1.375rem; }
+.apex-empty__body { color: var(--muted); font-weight: 700; font-size: 0.875rem; max-width: 420px; line-height: 1.5; }
+.apex-empty__action { margin-top: 8px; }

@@ -25,11 +25,6 @@ export function equityCurve(trades: Trade[], tz: string = DEFAULT_TZ): EquityPoi
   });
 }
 
-/** Per-day net PnL values (closed trades), date-sorted. */
-export function dailyPnl(trades: Trade[], tz: string = DEFAULT_TZ): number[] {
-  return equityCurve(trades, tz).map((p) => p.pnl);
-}
-
 export interface Drawdown {
   maxDrawdown: number; // minor units, positive magnitude
   maxDrawdownPct: number; // fraction of peak

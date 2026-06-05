@@ -10,6 +10,8 @@ import type { Trade } from '@/domain/types';
 import { FilterBar } from '@/components/FilterBar';
 import { TradeDrawer } from '@/components/TradeDrawer';
 import { Card } from '@/components/Card';
+import { EmptyState } from '@/components/EmptyState';
+import { IconTable } from '@/components/Icon';
 import { PageHeader } from './PageHeader';
 import './Trades.css';
 
@@ -61,9 +63,7 @@ export function Trades() {
       <FilterBar />
 
       {allTrades.length === 0 ? (
-        <Card style={{ minHeight: 160, display: 'grid', placeItems: 'center', color: 'var(--muted)' }}>
-          No trades yet — import a .tlg or CSV file.
-        </Card>
+        <EmptyState icon={<IconTable size={26} />} title="No trades yet" body="Import a .tlg or CSV file to see your trades here." />
       ) : (
         <Card style={{ padding: 0, overflow: 'hidden' }}>
           <div className="apex-table-wrap">

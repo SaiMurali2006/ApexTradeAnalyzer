@@ -8,13 +8,14 @@
   border: 1px solid var(--line-soft);
   border-radius: var(--r-panel);
   padding: 18px;
-  transition: transform 0.26s var(--ease-bounce), background 0.18s ease, border-color 0.18s ease;
+  transition: transform 0.26s var(--ease-bounce), background 0.18s ease, border-color 0.18s ease, box-shadow 0.26s ease;
   animation: apex-rise 0.44s var(--ease-bounce) both;
 }
 .apex-card--hover:hover {
   transform: translateY(-3px);
   background: var(--card-hover);
   border-color: var(--accent-soft);
+  box-shadow: 0 12px 28px color-mix(in srgb, black 22%, transparent);
 }
 
 .apex-statcard { display: flex; flex-direction: column; gap: 8px; }
@@ -25,5 +26,16 @@
   text-transform: uppercase;
   color: var(--muted);
 }
-.apex-statcard__value { font-size: 1.625rem; font-weight: 800; }
+/* value-refresh pulse — replays on mount/value change (StatCard keys on value) */
+@keyframes apex-value-pulse {
+  0% { opacity: 0.25; transform: scale(1.14); }
+  60% { opacity: 1; }
+  100% { transform: scale(1); }
+}
+.apex-statcard__value {
+  font-size: 1.625rem;
+  font-weight: 800;
+  transform-origin: left center;
+  animation: apex-value-pulse 0.45s var(--ease-bounce) both;
+}
 .apex-statcard__sub { font-size: 0.8125rem; color: var(--muted); }

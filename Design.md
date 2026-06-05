@@ -207,11 +207,12 @@ Bouncy release, snappy press. No linear easing. No overshoot longer than ~520ms.
 
 | Element | Behavior |
 |---|---|
-| Buttons | press → `scale(0.9)` on `--ease-press`; release springs to 1 on `--ease-bounce` (~360ms). Icon buttons press to `0.8–0.85`. |
-| Cards | hover lifts `translateY(-3px)`; mount entrance fades + rises ~10px on `--ease-bounce` (~440ms). |
-| Key value refresh | pulse opacity `1→0.25→1` + scale `1→1.14→1`. |
+| Buttons | press → `scale(0.9)` on `--ease-press`; release springs to 1 on `--ease-bounce` (~360ms). Icon buttons press to `0.8–0.85`. Primary buttons gain an accent-tinted shadow on hover. |
+| Cards | hover lifts `translateY(-3px)` + soft drop shadow; mount entrance fades + rises ~10px on `--ease-bounce` (~440ms). |
+| Key value refresh | pulse opacity `0.25→1` + scale `1.14→1` (~450ms). Implement by **keying the value node on its content** so React remounts it and the CSS animation replays on every change. |
+| Empty-state badge | icon badge pops in `scale(0.6→1)` on `--ease-bounce` (~500ms). |
 | Dialogs / toasts | scale `0.86→1` + fade, settle ~500ms; toasts auto-dismiss ~1.6s. |
-| Views (route change) | quick fade + 6px rise (~280ms). |
+| Views (route change) | quick fade + 6px rise (~280ms), keyed on the route path. |
 | Logo badge | the one "grow" hover: `scale(1.06)`. |
 
 For a true two-oscillation elastic spring (large surfaces), use the **Web Animations API** with keyframes — CSS `cubic-bezier` only does a single overshoot. `--ease-bounce` covers everyday press/hover.
@@ -278,7 +279,8 @@ Build these as themed React components; all consume tokens only.
 - **SegmentedControl** — `--input` container, `--r-icon`, 3+ `--r-pill` segments; active = `--accent` bg + `--on-accent`.
 - **DataTable** — sticky `--panel` header, `--line-soft` row borders, hover `--card-hover`, mono numeric cells right-aligned, themed scrollbar; row → detail drawer.
 - **Drawer** — right-side, `--panel`, slide-in spring, scrim, Esc to close.
-- **EmptyState** — centered card: accent-tinted badge + `900` heading + `--muted` body + primary CTA.
+- **EmptyState** — centered card: accent-tinted icon badge (pops in, §9) + `900` heading + `--muted` body + optional primary CTA. Use one shared component for every no-data state so they read identically.
+- **ChartCard** — wraps the chart lib in a `Card`; uppercase `--muted` title with a `--line-soft` divider above the canvas; resolves tokens to real colors (§13) and remounts on theme change.
 
 ---
 

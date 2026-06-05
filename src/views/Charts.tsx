@@ -9,7 +9,8 @@ import { adjustCosts } from '@/domain/costs';
 import { formatMoney, toMajor } from '@/domain/money';
 import { ChartCard } from '@/components/ChartCard';
 import { FilterBar } from '@/components/FilterBar';
-import { Card } from '@/components/Card';
+import { EmptyState } from '@/components/EmptyState';
+import { IconChart } from '@/components/Icon';
 import { PageHeader } from './PageHeader';
 import { useTheme } from '@/theme/ThemeProvider';
 import { useSettings } from '@/store/useSettings';
@@ -152,9 +153,7 @@ export function Charts() {
     return (
       <>
         <PageHeader eyebrow="Analytics" title="Charts" />
-        <Card style={{ minHeight: 200, display: 'grid', placeItems: 'center', color: 'var(--muted)' }}>
-          No trades yet — import a .tlg or CSV file.
-        </Card>
+        <EmptyState icon={<IconChart size={26} />} title="No trades yet" body="Import a .tlg or CSV file to explore your performance charts." />
       </>
     );
   }
@@ -178,7 +177,7 @@ export function Charts() {
         <ChartCard title="PnL distribution" option={histOption} />
         <ChartCard title="Drawdown" option={ddOption} />
         <ChartCard title="PnL by day of week" option={dowOption} />
-        <ChartCard title="PnL by hour (open, UTC)" option={hourOption} />
+        <ChartCard title="PnL by hour of day (open)" option={hourOption} />
         <ChartCard title="PnL by symbol (top 15) — click to filter" option={symOption} events={symClick} />
         <ChartCard title="PnL by asset type" option={assetOption} />
       </div>
