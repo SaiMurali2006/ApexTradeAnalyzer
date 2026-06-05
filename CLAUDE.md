@@ -472,6 +472,49 @@ Beyond the shipped core (steps 1–10), these are the next intended features. Ke
 
 > When implementing any of these, add a Changelog row and update the relevant `§5` view spec.
 
+### Analytics accuracy (found in math audit — refinements, not sign/scale bugs)
+
+The core math is verified correct (PnL reconstruction, profit factor, expectancy, win/loss & adjusted ratios, Kelly, SQN, drawdown, dedupe, calendar/cashflow buckets). These are accuracy/labelling improvements:
+
+18. **Risk-adjusted ratios use active-days-only series.** `equityCurve` emits only days that *had* closed trades, so Sharpe/Sortino/gain-to-pain/Omega are computed over active days and read high vs. the standard (which includes flat 0-PnL trading days). Fix: build the daily series across every trading day in the filtered range (fill gaps with 0) before computing mean/σ/downside.
+19. **Calmar is not annualized.** `calmar = netPnl / maxDrawdown` currently equals `recoveryFactor`. True Calmar = *annualized* return / |maxDD| (needs the date span + starting balance). Implement once cash-flow-aware balances/time span land (ties into TWR/CAGR, item 3).
+20. **CAGR (`cagrLike`) is a hardcoded 0 placeholder.** Compute real CAGR from starting balance + first/last dates (and net deposits) and surface it; or remove the field until then.
+21. **Omega duplicates gain-to-pain.** Omega at MAR=0 is exactly Σpos/Σ|neg|, so the two cards show the same number. Either drive Omega from a configurable MAR (≠0) or drop one.
+22. **SQN is uncapped.** Van Tharp caps the trade count at 100 (`√min(N,100)`); current `√N` inflates SQN for large samples. Optional: apply the cap.
+23. **Sharpe/Sortino are PnL-based, not return-based.** They use cash-PnL per day (scale-invariant ratio, then ×√252). For a true % Sharpe, base the daily series on returns over account balance (needs balances from cash flows). Document the convention either way.
+
+### Analytics depth
+
+24. **Rolling-metric charts** — 30/90-day rolling win rate, expectancy, and Sharpe over time.
+25. **Underwater / drawdown-duration chart** — time spent below the prior equity peak.
+26. **R-multiple analytics** — once stops exist, R-distribution histogram + expectancy in R.
+27. **Leak finder** — expectancy/win-rate by setup and by mistake tag, ranked, to surface losing patterns.
+28. **Pivot table** — TradesViz-style sortable aggregate grid (PnL/win-rate/count by symbol, tag, setup, day-of-week, hour) with drag-to-group.
+
+### Workflow & data
+
+29. **Editable trades** — edit stop loss, profit target, tags, setup, notes, rating in the trade drawer; persist to IndexedDB and feed tag/setup analytics (extends §8b item 4).
+30. **Undo / soft-delete** — confirm + undo on wipe; "undo last import" that removes just the executions added by the most recent import (use the dedupe hashes).
+31. **Import history log** — record each import (filename, timestamp, executions added, broker) in its own table; show on the Import page; allow re-sync.
+32. **More broker presets** — saved auto-detect column maps for Schwab, Webull, Tastytrade, IBKR Flex CSV, Binance (extends §8b item 10).
+
+### UX
+
+33. **Customizable dashboard widget grid** — add/remove/rearrange widgets on `/dashboard` (the §5.1 spec already calls for this); persist layout locally. **← next up.**
+34. **Command palette (⌘K)** — fuzzy nav across views + quick filter actions.
+35. **Saved filter presets** — name and recall global filter-bar combinations; date-range quick presets (MTD / YTD / last 30 / last 90).
+36. **Keyboard navigation** — j/k + arrow keys to move through the trades table and open/close the drawer.
+
+### Robustness & engineering
+
+37. **Property-based reconstruction test** — random fill sequences; assert position returns to flat, Σ realized PnL invariants, and no NaN.
+38. **Code-split ECharts** — dynamic-import the charts so the main bundle drops under the 500 kB warning.
+39. **Virtualized trades table** — windowed rows for very large datasets (10k+ trades).
+40. **PWA / offline install** — manifest + service worker (already local-first; extends §8b item 11).
+41. **Timezone-correct table & filters** — make the Trades table dates and the date-range filter use the exchange tz instead of UTC slices (extends §8b item 16).
+
+> When implementing any of these, add a Changelog row and update the relevant `§5` view spec.
+
 ---
 
 ## 9. Changelog
