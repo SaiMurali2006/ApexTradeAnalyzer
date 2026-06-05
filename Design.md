@@ -281,6 +281,42 @@ Build these as themed React components; all consume tokens only.
 - **Drawer** — right-side, `--panel`, slide-in spring, scrim, Esc to close.
 - **EmptyState** — centered card: accent-tinted icon badge (pops in, §9) + `900` heading + `--muted` body + optional primary CTA. Use one shared component for every no-data state so they read identically.
 - **ChartCard** — wraps the chart lib in a `Card`; uppercase `--muted` title with a `--line-soft` divider above the canvas; resolves tokens to real colors (§13) and remounts on theme change.
+- **Customizable widget grid** — an edit-mode dashboard where widgets can be added/removed, reordered, and resized; layout persists locally. See §13c for the interaction rules.
+
+---
+
+## 13c. Customizable widget grid
+
+A dashboard of self-contained widgets the user can rearrange. Layout is `{id, w, h}[]`
+(column span `w` 1–N, optional pixel height `h`) persisted to `localStorage`; a widget
+*registry* maps each id to its render. A fixed N-column CSS grid (e.g. `repeat(4, 1fr)`,
+dropping to 2 then 1 at breakpoints); each widget sets `grid-column: span w` — spans
+auto-clamp on narrower grids, so no per-breakpoint math.
+
+**Edit mode** (toggled by a "Customize" button): each widget gains a drag **grip**, a
+remove **✕**, and an SE **resize handle**; an "Add widget" chip row lists removed widgets;
+a "Reset" restores defaults. A dashed outline marks editable widgets.
+
+**Reorder — commit on drop, never mid-drag.** This is the rule that makes it feel solid:
+- On grip `pointerdown`, attach `pointermove`/`pointerup` to `window` *directly in the
+  handler* (not via an effect keyed on the list — that tears listeners down mid-gesture).
+- During the move, only **track** the hovered target (`document.elementFromPoint(...).closest('[data-wid]')`)
+  and highlight it; do **not** reorder yet. Live-reordering variable-size items reflows the
+  grid under the cursor → oscillation and stacked animations ("confused" motion).
+- On `pointerup`, move the dragged id to the target's index **once**.
+- Read the live list from a ref inside the handlers; resolve targets from the DOM, not a
+  React ref-map (inline `ref` callbacks churn every render).
+
+**Resize** — SE handle `pointerdown` captures the baseline (start X/Y, start `w`/`h`,
+column step = gridWidth/N) **once**, then `pointermove` maps Δx→column span (snap, clamp
+1–N) and Δy→height (clamp) for height-resizable widgets. Live-tracks the cursor.
+
+**Motion — single FLIP on the committed change.** Snapshot widget rects *before* the drop
+mutation; after layout, animate each moved node from old→new with a **translate-only** WAAPI
+keyframe on `--ease-bounce` (~300ms). Translate-only — never `scale` — or card/chart content
+distorts. Gate the FLIP so it runs **only when the order signature changes** (and only for a
+reorder you initiated, via the captured snapshot), so unrelated re-renders (filters, theme,
+data) never animate. Respect `prefers-reduced-motion`.
 
 ---
 
