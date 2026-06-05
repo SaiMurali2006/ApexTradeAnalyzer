@@ -1,7 +1,7 @@
 // Overall statistics (CLAUDE.md §4). Every value is a pure fn of a Trade[].
 // Money in integer minor units; ratios are unitless; durations in ms.
 import type { Trade } from '@/domain/types';
-import { drawdown, equityCurve, mean, percentile, stdDev } from './series';
+import { downsideDeviation, drawdown, equityCurve, mean, percentile, stdDev } from './series';
 import { DEFAULT_TZ } from '@/lib/dates';
 
 const TRADING_DAYS = 252;
@@ -88,7 +88,7 @@ export function computeOverallStats(input: Trade[], tz: string = DEFAULT_TZ): Ov
   const dd = drawdown(curve);
   const meanDaily = mean(daily);
   const sd = stdDev(daily);
-  const downside = stdDev(daily.filter((x) => x < 0).length ? daily.map((x) => Math.min(0, x)) : [0, 0], false);
+  const downside = downsideDeviation(daily, 0);
   const posSum = daily.filter((x) => x > 0).reduce((a, b) => a + b, 0);
   const negSumAbs = Math.abs(daily.filter((x) => x < 0).reduce((a, b) => a + b, 0));
 

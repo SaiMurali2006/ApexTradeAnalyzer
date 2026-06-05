@@ -26,6 +26,7 @@ export interface Execution {
   price: number; // minor units per unit (e.g. cents/share)
   commission: number; // minor units, positive magnitude
   fees: number; // minor units, positive magnitude
+  brokerId?: string; // stable broker-side execution id (dedupe across re-imports)
   raw?: Record<string, string>;
 }
 

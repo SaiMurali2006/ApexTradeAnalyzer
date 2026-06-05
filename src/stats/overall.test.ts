@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { computeOverallStats } from './overall';
-import { drawdown, equityCurve, percentile, stdDev } from './series';
+import { downsideDeviation, drawdown, equityCurve, percentile, stdDev } from './series';
 import type { Trade } from '@/domain/types';
 
 let id = 0;
@@ -47,6 +47,12 @@ describe('series', () => {
   it('stdDev and percentile', () => {
     expect(stdDev([2, 4, 4, 4, 5, 5, 7, 9], false)).toBeCloseTo(2, 5);
     expect(percentile([1, 2, 3, 4], 0.5)).toBeCloseTo(2.5, 5);
+  });
+
+  it('downsideDeviation is RMS of shortfalls below MAR=0', () => {
+    // negatives -3,-4 -> sqrt((9+16)/5) over 5 points (positives contribute 0)
+    expect(downsideDeviation([10, 5, -3, 2, -4])).toBeCloseTo(Math.sqrt((9 + 16) / 5), 6);
+    expect(downsideDeviation([1, 2, 3])).toBe(0); // no shortfalls
   });
 });
 

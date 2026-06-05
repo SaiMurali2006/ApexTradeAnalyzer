@@ -67,6 +67,17 @@ export function stdDev(xs: number[], sample = true): number {
   return Math.sqrt(v);
 }
 
+/**
+ * Downside deviation for Sortino: RMS of shortfalls below a minimum acceptable
+ * return (MAR, default 0) — not the std dev around the mean. Returns over MAR
+ * contribute 0; only the magnitude of negative excursions matters.
+ */
+export function downsideDeviation(xs: number[], mar = 0): number {
+  if (!xs.length) return 0;
+  const sumSq = xs.reduce((a, x) => a + Math.min(0, x - mar) ** 2, 0);
+  return Math.sqrt(sumSq / xs.length);
+}
+
 /** percentile (0..1) via linear interpolation on a copy-sorted array. */
 export function percentile(xs: number[], p: number): number {
   if (!xs.length) return 0;

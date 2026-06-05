@@ -25,9 +25,15 @@ class ApexDB extends Dexie {
 
 export const db = new ApexDB();
 
-/** Stable dedupe hash for an execution (broker id + symbol + ts + qty + price). */
+/**
+ * Stable dedupe hash for an execution. Content-based so re-importing the same file
+ * collapses to the same key (the volatile `id` carries a per-import counter and must
+ * NOT be used). When the broker supplies a stable execution id, it disambiguates
+ * genuinely-identical fills.
+ */
 export function execHash(e: Execution): string {
-  return `${e.account}|${e.symbol}|${e.timestamp}|${e.action}|${e.quantity}|${e.price}|${e.id}`;
+  const core = `${e.account}|${e.symbol}|${e.timestamp}|${e.action}|${e.quantity}|${e.price}|${e.commission}|${e.fees}`;
+  return e.brokerId ? `${core}|${e.brokerId}` : core;
 }
 
 /** Insert new executions (dedup by hash) and return how many were added. */

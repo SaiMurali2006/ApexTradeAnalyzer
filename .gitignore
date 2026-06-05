@@ -45,3 +45,4 @@ Thumbs.db
 # Local trading data — never commit personal trade logs / exports
 *.tlg
 apex-export-*.json
+*.csv

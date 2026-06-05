@@ -1,5 +1,6 @@
-// Import: drag-drop .tlg / CSV, auto-detect format, reconstruct trades, preview with
-// warnings, then commit to IndexedDB (deduped). Same pipeline for both file types.
+// Import: drag-drop .tlg / CSV (auto-detect) or a dedicated Trade Republic CSV,
+// reconstruct trades, preview with warnings, then commit to IndexedDB (deduped).
+// All sources feed the one shared reconstruct→preview→persist pipeline.
 import { useCallback, useRef, useState } from 'react';
 import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';
@@ -7,10 +8,13 @@ import { PageHeader } from './PageHeader';
 import { detectFileType } from '@/import/detectFileType';
 import { parseTlg, type ParseResult } from '@/import/parseTlg';
 import { autoMap, csvHeaders, parseCsv } from '@/import/parseCsv';
+import { parseTradeRepublic } from '@/import/parseTradeRepublic';
 import { reconstructTrades } from '@/domain/reconstructTrades';
 import { useData } from '@/store/useData';
 import { formatMoney } from '@/domain/money';
 import type { Trade } from '@/domain/types';
+
+type Source = 'auto' | 'tradeRepublic';
 
 interface Preview {
   fileName: string;
@@ -18,31 +22,26 @@ interface Preview {
   trades: Trade[];
 }
 
+function parseBySource(text: string, source: Source): ParseResult {
+  if (source === 'tradeRepublic') return parseTradeRepublic(text);
+  const kind = detectFileType('', text.slice(0, 4000));
+  return kind === 'tlg' ? parseTlg(text) : parseCsv(text, autoMap(csvHeaders(text)));
+}
+
 export function Import() {
   const commit = useData((s) => s.commitExecutions);
   const [preview, setPreview] = useState<Preview | null>(null);
   const [status, setStatus] = useState<string | null>(null);
-  const [drag, setDrag] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleFile = useCallback(async (file: File) => {
+  const handleFile = useCallback(async (file: File, source: Source) => {
     setStatus(null);
     const text = await file.text();
-    const kind = detectFileType(file.name, text.slice(0, 4000));
-    const parse = kind === 'tlg' ? parseTlg(text) : parseCsv(text, autoMap(csvHeaders(text)));
+    // .tlg always routes to the TradeLog parser regardless of source selection
+    const effective: Source = file.name.toLowerCase().endsWith('.tlg') ? 'auto' : source;
+    const parse = parseBySource(text, effective);
     const { trades } = reconstructTrades(parse.executions);
     setPreview({ fileName: file.name, parse, trades });
   }, []);
-
-  const onDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault();
-      setDrag(false);
-      const file = e.dataTransfer.files[0];
-      if (file) void handleFile(file);
-    },
-    [handleFile],
-  );
 
   const doCommit = useCallback(async () => {
     if (!preview) return;
@@ -55,34 +54,19 @@ export function Import() {
     <>
       <PageHeader eyebrow="Data" title="Import" />
 
-      <div
-        onDragOver={(e) => {
-          e.preventDefault();
-          setDrag(true);
-        }}
-        onDragLeave={() => setDrag(false)}
-        onDrop={onDrop}
-        onClick={() => inputRef.current?.click()}
-        style={{
-          border: `1.5px dashed ${drag ? 'var(--accent)' : 'var(--line)'}`,
-          borderRadius: 'var(--r-panel)',
-          background: drag ? 'var(--accent-soft)' : 'var(--card)',
-          padding: 40,
-          textAlign: 'center',
-          cursor: 'pointer',
-          transition: 'background .18s ease, border-color .18s ease',
-        }}
-      >
-        <div style={{ fontWeight: 900, fontSize: '1.125rem', marginBottom: 6 }}>Drop a .tlg or .csv file</div>
-        <div style={{ color: 'var(--muted)', fontWeight: 700 }}>
-          IB TradeLog (.tlg) or any broker CSV — or click to browse
-        </div>
-        <input
-          ref={inputRef}
-          type="file"
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))', gap: 12 }}>
+        <DropZone
+          title="Drop a .tlg or .csv file"
+          subtitle="IB TradeLog (.tlg) or any broker CSV — or click to browse"
           accept=".tlg,.csv,text/csv"
-          hidden
-          onChange={(e) => e.target.files?.[0] && void handleFile(e.target.files[0])}
+          onFile={(f) => handleFile(f, 'auto')}
+        />
+        <DropZone
+          title="Trade Republic CSV"
+          subtitle="TR transactions export (.csv) — buy/sell trades, EUR — or click to browse"
+          accent
+          accept=".csv,text/csv"
+          onFile={(f) => handleFile(f, 'tradeRepublic')}
         />
       </div>
 
@@ -149,3 +133,46 @@ export function Import() {
 }
 
 const cell: React.CSSProperties = { padding: '6px 10px', borderBottom: '1px solid var(--line-soft)' };
+
+function DropZone({ title, subtitle, accept, accent, onFile }: { title: string; subtitle: string; accept: string; accent?: boolean; onFile: (f: File) => void }) {
+  const [drag, setDrag] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  return (
+    <div
+      onDragOver={(e) => {
+        e.preventDefault();
+        setDrag(true);
+      }}
+      onDragLeave={() => setDrag(false)}
+      onDrop={(e) => {
+        e.preventDefault();
+        setDrag(false);
+        const f = e.dataTransfer.files[0];
+        if (f) onFile(f);
+      }}
+      onClick={() => inputRef.current?.click()}
+      style={{
+        border: `1.5px dashed ${drag ? 'var(--accent)' : accent ? 'var(--accent-soft)' : 'var(--line)'}`,
+        borderRadius: 'var(--r-panel)',
+        background: drag ? 'var(--accent-soft)' : 'var(--card)',
+        padding: 40,
+        textAlign: 'center',
+        cursor: 'pointer',
+        transition: 'background .18s ease, border-color .18s ease, transform .26s var(--ease-bounce)',
+      }}
+    >
+      <div style={{ fontWeight: 900, fontSize: '1.125rem', marginBottom: 6 }}>{title}</div>
+      <div style={{ color: 'var(--muted)', fontWeight: 700 }}>{subtitle}</div>
+      <input
+        ref={inputRef}
+        type="file"
+        accept={accept}
+        hidden
+        onChange={(e) => {
+          if (e.target.files?.[0]) onFile(e.target.files[0]);
+          e.target.value = '';
+        }}
+      />
+    </div>
+  );
+}

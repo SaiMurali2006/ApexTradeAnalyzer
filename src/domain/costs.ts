@@ -2,6 +2,7 @@
 // minus the cost components the user chose to include. All downstream stats read
 // netPnl, so adjusting it here flows through filters, calendar, charts, and metrics.
 import type { Trade } from './types';
+import { contractMultiplier } from './multipliers';
 
 export interface CostOptions {
   includeCommission: boolean;
@@ -19,7 +20,8 @@ export function adjustCosts(trades: Trade[], opts: CostOptions): Trade[] {
   if (opts.includeCommission && opts.includeFees) return trades;
   return trades.map((t) => {
     const netPnl = effectivePnl(t, opts);
-    const costBasis = t.avgEntry * t.qty;
+    // match reconstructTrades: cost basis includes the contract multiplier
+    const costBasis = t.avgEntry * t.qty * contractMultiplier(t.assetType, t.symbol);
     return {
       ...t,
       netPnl,

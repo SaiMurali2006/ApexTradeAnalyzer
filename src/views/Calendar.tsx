@@ -14,6 +14,7 @@ import { EmptyState } from '@/components/EmptyState';
 import { IconCalendar } from '@/components/Icon';
 import { FilterBar } from '@/components/FilterBar';
 import { TradeDrawer } from '@/components/TradeDrawer';
+import { DayDrawer } from '@/components/DayDrawer';
 import { PageHeader } from './PageHeader';
 import { useTheme } from '@/theme/ThemeProvider';
 import { useSettings } from '@/store/useSettings';
@@ -168,32 +169,12 @@ export function Calendar() {
         </Card>
       )}
 
-      {day && (
-        <Card style={{ marginTop: 12 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <div style={{ fontWeight: 900 }}>
-              {day.date} · <span className="mono" style={{ color: day.pnl >= 0 ? 'var(--profit)' : 'var(--danger)' }}>{formatMoney(day.pnl, { signed: true })}</span>
-              <span style={{ color: 'var(--muted)', marginLeft: 8 }}>{day.count} trades</span>
-            </div>
-            <Button variant="icon" onClick={() => setDay(null)} aria-label="Close">✕</Button>
-          </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-            {(flowMap.get(day.date)?.flows ?? []).map((cf) => (
-              <span key={cf.id} className="apex-daychip mono" style={{ borderColor: cf.type === 'deposit' ? 'var(--profit)' : 'var(--danger)' }}>
-                <span>{cf.type === 'deposit' ? '▲ Deposit' : '▼ Withdrawal'}</span>
-                <span style={{ color: cf.type === 'deposit' ? 'var(--profit)' : 'var(--danger)' }}>{formatMoney(cf.amount)}</span>
-              </span>
-            ))}
-            {day.trades.map((t) => (
-              <button key={t.id} className="apex-daychip mono" onClick={() => setActiveTrade(t)}>
-                <span>{t.symbol}</span>
-                <span style={{ color: t.netPnl >= 0 ? 'var(--profit)' : 'var(--danger)' }}>{formatMoney(t.netPnl, { signed: true })}</span>
-              </button>
-            ))}
-          </div>
-        </Card>
-      )}
-
+      <DayDrawer
+        day={day}
+        flows={day ? flowMap.get(day.date)?.flows ?? [] : []}
+        onClose={() => setDay(null)}
+        onPickTrade={setActiveTrade}
+      />
       <TradeDrawer trade={activeTrade} onClose={() => setActiveTrade(null)} />
     </>
   );

@@ -86,6 +86,7 @@ export function parseTlg(text: string, account = 'IB'): ParseResult {
     const baseId = cells[COL.id]?.trim() || `tlg-${tlgSeq}`;
     executions.push({
       id: `${baseId}-${tlgSeq++}`,
+      brokerId: baseId,
       symbol,
       assetType: asset,
       account,
