@@ -6,10 +6,17 @@ export interface StoredExecution extends Execution {
   hash: string; // dedupe key on re-import
 }
 
+/** Cached daily FX rate: USD per 1 EUR, keyed by date (YYYY-MM-DD). */
+export interface RateRow {
+  date: string;
+  eurUsd: number;
+}
+
 class ApexDB extends Dexie {
   executions!: Table<StoredExecution, string>;
   trades!: Table<Trade, string>;
   cashFlows!: Table<CashFlow, string>;
+  rates!: Table<RateRow, string>;
 
   constructor() {
     super('apex-trade-analyzer');
@@ -19,6 +26,20 @@ class ApexDB extends Dexie {
     });
     this.version(2).stores({
       cashFlows: 'id, date, type, account',
+    });
+    // v3: redeclare the full schema so any client whose on-disk schema drifted during
+    // earlier dev iterations re-syncs and is guaranteed to have the cashFlows store.
+    this.version(3).stores({
+      executions: 'hash, symbol, account, assetType, timestamp',
+      trades: 'id, symbol, account, assetType, openDate, closeDate',
+      cashFlows: 'id, date, type, account',
+    });
+    // v4: cached daily FX rates (EUR↔USD).
+    this.version(4).stores({
+      executions: 'hash, symbol, account, assetType, timestamp',
+      trades: 'id, symbol, account, assetType, openDate, closeDate',
+      cashFlows: 'id, date, type, account',
+      rates: 'date',
     });
   }
 }
@@ -73,6 +94,32 @@ export async function deleteCashFlow(id: string): Promise<void> {
   await db.cashFlows.delete(id);
 }
 
+export async function allRates(): Promise<RateRow[]> {
+  return db.rates.orderBy('date').toArray();
+}
+
+export async function putRate(row: RateRow): Promise<void> {
+  await db.rates.put(row);
+}
+
+export async function getRate(date: string): Promise<RateRow | undefined> {
+  return db.rates.get(date);
+}
+
+/** Clear executions + reconstructed trades (cash flows untouched). */
+export async function wipeTradesData(): Promise<void> {
+  await db.transaction('rw', db.executions, db.trades, async () => {
+    await db.executions.clear();
+    await db.trades.clear();
+  });
+}
+
+/** Clear cash flows only (trades untouched). */
+export async function wipeCashFlowsData(): Promise<void> {
+  await db.cashFlows.clear();
+}
+
+/** Clear everything user-entered (trades + cash flows). Cached FX rates are kept as reference. */
 export async function wipeAll(): Promise<void> {
   await db.transaction('rw', db.executions, db.trades, db.cashFlows, async () => {
     await db.executions.clear();

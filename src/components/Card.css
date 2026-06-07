@@ -26,6 +26,12 @@
   text-transform: uppercase;
   color: var(--muted);
 }
+/* subtle affordance that a hover explanation exists */
+.apex-statcard__label.is-hinted {
+  cursor: help;
+  text-decoration: underline dotted color-mix(in srgb, var(--muted) 60%, transparent);
+  text-underline-offset: 3px;
+}
 /* value-refresh pulse — replays on mount/value change (StatCard keys on value) */
 @keyframes apex-value-pulse {
   0% { opacity: 0.25; transform: scale(1.14); }

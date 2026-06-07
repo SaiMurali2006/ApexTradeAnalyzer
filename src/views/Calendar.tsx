@@ -18,9 +18,11 @@ import { DayDrawer } from '@/components/DayDrawer';
 import { PageHeader } from './PageHeader';
 import { useTheme } from '@/theme/ThemeProvider';
 import { useSettings } from '@/store/useSettings';
+import { useRates } from '@/store/useRates';
 import { adjustCosts } from '@/domain/costs';
+import { convertTrades, convertCashFlows } from '@/domain/currency';
 import { cssVar } from '@/theme/echartsApexTheme';
-import type { Trade } from '@/domain/types';
+import type { Currency, Trade } from '@/domain/types';
 import './Calendar.css';
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -45,11 +47,14 @@ export function Calendar() {
   const tz = useSettings((s) => s.timezone);
   const includeCommission = useSettings((s) => s.includeCommission);
   const includeFees = useSettings((s) => s.includeFees);
+  const currency = useSettings((s) => s.currency);
+  const eurUsd = useRates((s) => s.eurUsd);
+  const displayCcy: Currency = currency === 'EUR' ? 'EUR' : 'USD';
   const cashFlows = useData((s) => s.cashFlows);
-  const adjusted = useMemo(() => adjustCosts(all, { includeCommission, includeFees }), [all, includeCommission, includeFees]);
+  const adjusted = useMemo(() => convertTrades(adjustCosts(all, { includeCommission, includeFees }), displayCcy, eurUsd), [all, includeCommission, includeFees, displayCcy, eurUsd]);
   const trades = useMemo(() => applyFilters(adjusted, filters), [adjusted, filters]);
   const map = useMemo(() => dayMap(trades, tz), [trades, tz]);
-  const flowMap = useMemo(() => flowByDay(cashFlows), [cashFlows]);
+  const flowMap = useMemo(() => flowByDay(convertCashFlows(cashFlows, displayCcy, eurUsd)), [cashFlows, displayCcy, eurUsd]);
 
   // default to most recent trade's month
   const latest = useMemo(() => {

@@ -96,6 +96,7 @@ export function parseTlg(text: string, account = 'IB'): ParseResult {
       price: toMinor(price),
       commission: toMinor(Math.abs(Number(cells[COL.comm]) || 0)),
       fees: 0,
+      currency: 'USD',
       raw: Object.fromEntries(cells.map((c, i) => [String(i), c])),
     });
   }

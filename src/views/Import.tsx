@@ -119,7 +119,7 @@ export function Import() {
                     <td style={cell}>{t.closeDate?.slice(0, 10) ?? 'open'}</td>
                     <td style={cell}>{t.qty}</td>
                     <td style={{ ...cell, color: t.netPnl >= 0 ? 'var(--profit)' : 'var(--danger)' }}>
-                      {formatMoney(t.netPnl, { signed: true })}
+                      {formatMoney(t.netPnl, { signed: true, currency: t.currency ?? 'USD' })}
                     </td>
                   </tr>
                 ))}

@@ -9,5 +9,7 @@ export default defineConfig({
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
   },
-  server: { port: 5173, open: true },
+  // 5173 is reserved by Windows on this machine (EACCES on ::1) — use 8080.
+  // strictPort:false lets Vite fall back if 8080 is busy too.
+  server: { port: 8080, strictPort: false, open: true },
 });

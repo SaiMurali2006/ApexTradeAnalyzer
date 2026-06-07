@@ -49,11 +49,34 @@ function resolveMode(mode: Mode): 'light' | 'dark' {
   return mode;
 }
 
+function lighten(hex: string, pct: number): string {
+  const h = hex.replace('#', '');
+  const n = parseInt(h.length === 3 ? h.split('').map((c) => c + c).join('') : h, 16);
+  const mix = (c: number) => Math.round(c + (255 - c) * pct);
+  const r = mix((n >> 16) & 255), g = mix((n >> 8) & 255), b = mix(n & 255);
+  return `#${((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1)}`;
+}
+
+/** Build the favicon from the active accent so the tab icon matches the theme. */
+function applyFavicon(accent: string): void {
+  const fg = onAccent(accent);
+  const ring = lighten(accent, 0.25);
+  const svg =
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">` +
+    `<rect x="2" y="2" width="28" height="28" rx="8" fill="${accent}"/>` +
+    `<rect x="2.6" y="2.6" width="26.8" height="26.8" rx="7.4" fill="none" stroke="${ring}" stroke-width="1.2"/>` +
+    `<path d="M16 8.5l6.5 15h-3.2l-1.25-3.1h-4.1L12.7 23.5H9.5L16 8.5zm0 5.6l-1.2 3h2.4l-1.2-3z" fill="${fg}"/>` +
+    `</svg>`;
+  const link = document.getElementById('favicon') as HTMLLinkElement | null;
+  if (link) link.href = `data:image/svg+xml,${encodeURIComponent(svg)}`;
+}
+
 function apply(mode: Mode, accent: string): void {
   const root = document.documentElement;
   root.dataset.mode = resolveMode(mode);
   root.style.setProperty('--accent', accent);
   root.style.setProperty('--on-accent', onAccent(accent));
+  applyFavicon(accent);
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {

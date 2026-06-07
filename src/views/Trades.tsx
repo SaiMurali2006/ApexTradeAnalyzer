@@ -4,9 +4,11 @@ import { useMemo, useState } from 'react';
 import { useData } from '@/store/useData';
 import { applyFilters, useFilters } from '@/store/useFilters';
 import { useSettings } from '@/store/useSettings';
+import { useRates } from '@/store/useRates';
 import { adjustCosts } from '@/domain/costs';
+import { convertTrades } from '@/domain/currency';
 import { formatMoney, formatPct } from '@/domain/money';
-import type { Trade } from '@/domain/types';
+import type { Currency, Trade } from '@/domain/types';
 import { FilterBar } from '@/components/FilterBar';
 import { TradeDrawer } from '@/components/TradeDrawer';
 import { Card } from '@/components/Card';
@@ -32,11 +34,14 @@ export function Trades() {
   const filters = useFilters();
   const includeCommission = useSettings((s) => s.includeCommission);
   const includeFees = useSettings((s) => s.includeFees);
+  const currency = useSettings((s) => s.currency);
+  const eurUsd = useRates((s) => s.eurUsd);
+  const displayCcy: Currency = currency === 'EUR' ? 'EUR' : 'USD';
   const [sortKey, setSortKey] = useState<SortKey>('openDate');
   const [asc, setAsc] = useState(false);
   const [active, setActive] = useState<Trade | null>(null);
 
-  const adjusted = useMemo(() => adjustCosts(allTrades, { includeCommission, includeFees }), [allTrades, includeCommission, includeFees]);
+  const adjusted = useMemo(() => convertTrades(adjustCosts(allTrades, { includeCommission, includeFees }), displayCcy, eurUsd), [allTrades, includeCommission, includeFees, displayCcy, eurUsd]);
 
   const rows = useMemo(() => {
     const filtered = applyFilters(adjusted, filters);

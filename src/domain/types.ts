@@ -5,6 +5,8 @@ export type AssetType = 'stock' | 'future' | 'option' | 'forex' | 'crypto' | 'in
 export type Side = 'long' | 'short';
 export type Action = 'buy' | 'sell';
 export type CashFlowType = 'deposit' | 'withdrawal';
+/** Native currency of a monetary record. Undefined legacy rows are treated as USD. */
+export type Currency = 'USD' | 'EUR';
 
 export interface CashFlow {
   id: string;
@@ -12,6 +14,8 @@ export interface CashFlow {
   type: CashFlowType;
   amount: number; // minor units, positive magnitude
   account: string;
+  currency?: Currency; // native currency (undefined = USD)
+  eurUsd?: number; // rate locked at entry time (USD per 1 EUR); overrides the live rate
   note?: string;
 }
 
@@ -26,6 +30,7 @@ export interface Execution {
   price: number; // minor units per unit (e.g. cents/share)
   commission: number; // minor units, positive magnitude
   fees: number; // minor units, positive magnitude
+  currency?: Currency; // native currency of price/commission/fees (undefined = USD)
   brokerId?: string; // stable broker-side execution id (dedupe across re-imports)
   raw?: Record<string, string>;
 }
@@ -51,6 +56,7 @@ export interface Trade {
   returnPct: number; // on entry cost basis
   durationMs: number | null;
   isOpen: boolean;
+  currency?: Currency; // native currency of all money fields (undefined = USD)
 
   // optional risk inputs
   stopLoss?: number;

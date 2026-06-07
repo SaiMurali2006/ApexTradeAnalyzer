@@ -48,6 +48,9 @@ export const IconSettings = ({ size = 16, style }: IconProps) => (
     <circle cx="12" cy="12" r="3" />
   </svg>
 );
+export const IconPositions = ({ size = 16, style }: IconProps) => (
+  <svg {...base(size, style)}><rect x="2" y="4.5" width="12" height="9" rx="1.5" /><path d="M5.5 4.5V3.2a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v1.3M2 8.5h12" /></svg>
+);
 export const IconMenu = ({ size = 16, style }: IconProps) => (
   <svg {...base(size, style)}><path d="M2.5 4h11M2.5 8h11M2.5 12h11" /></svg>
 );

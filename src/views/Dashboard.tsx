@@ -21,10 +21,12 @@ import { computeOverallStats, type OverallStats } from '@/stats/overall';
 import { equityCurve } from '@/stats/series';
 import { balanceCurve, flowByDay, netDeposits } from '@/stats/cashflow';
 import { adjustCosts } from '@/domain/costs';
+import { convertTrades, convertCashFlows } from '@/domain/currency';
+import { useRates } from '@/store/useRates';
 import { cssVar } from '@/theme/echartsApexTheme';
 import { useTheme } from '@/theme/ThemeProvider';
 import { formatMoney, formatPct, toMajor, toMinor } from '@/domain/money';
-import type { Trade } from '@/domain/types';
+import type { Currency, Trade } from '@/domain/types';
 import './Dashboard.css';
 
 interface Ctx {
@@ -46,15 +48,15 @@ interface WidgetDef {
 const num = (x: number) => (Number.isFinite(x) ? x.toFixed(2) : '∞');
 
 const WIDGETS: Record<string, WidgetDef> = {
-  netPnl: { title: 'Net PnL', render: (c) => <StatCard label="Net PnL" value={formatMoney(c.stats.netPnl, { signed: true })} tone={c.stats.netPnl >= 0 ? 'profit' : 'danger'} sub={`${c.stats.totalTrades} trades`} /> },
-  winRate: { title: 'Win rate', render: (c) => <StatCard label="Win rate" value={formatPct(c.stats.winRate)} sub={`${c.stats.wins}W / ${c.stats.losses}L`} /> },
-  profitFactor: { title: 'Profit factor', render: (c) => <StatCard label="Profit factor" value={num(c.stats.profitFactor)} /> },
-  expectancy: { title: 'Expectancy', render: (c) => <StatCard label="Expectancy" value={formatMoney(c.stats.expectancy, { signed: true })} tone={c.stats.expectancy >= 0 ? 'profit' : 'danger'} /> },
-  maxDrawdown: { title: 'Max drawdown', render: (c) => <StatCard label="Max drawdown" value={formatMoney(-c.stats.maxDrawdown)} tone="danger" sub={formatPct(c.stats.maxDrawdownPct)} /> },
-  balance: { title: 'Account balance', render: (c) => <StatCard label="Account balance" value={formatMoney(c.currentBalance)} sub={`${formatMoney(c.netDep, { signed: true })} net deposited`} /> },
-  trades: { title: 'Trades', render: (c) => <StatCard label="Trades" value={String(c.stats.totalTrades)} sub={`${c.stats.maxConsecWins}W / ${c.stats.maxConsecLosses}L streak`} /> },
-  avgTrade: { title: 'Avg trade', render: (c) => <StatCard label="Avg trade" value={formatMoney(c.stats.avgTrade, { signed: true })} tone={c.stats.avgTrade >= 0 ? 'profit' : 'danger'} /> },
-  sharpe: { title: 'Sharpe', render: (c) => <StatCard label="Sharpe" value={num(c.stats.sharpe)} sub={`Sortino ${num(c.stats.sortino)}`} /> },
+  netPnl: { title: 'Net PnL', render: (c) => <StatCard label="Net PnL" value={formatMoney(c.stats.netPnl, { signed: true })} tone={c.stats.netPnl >= 0 ? 'profit' : 'danger'} sub={`${c.stats.totalTrades} trades`} hint="Total realized profit/loss after commission & fees." /> },
+  winRate: { title: 'Win rate', render: (c) => <StatCard label="Win rate" value={formatPct(c.stats.winRate)} sub={`${c.stats.wins}W / ${c.stats.losses}L`} hint="Share of closed trades with positive net PnL." /> },
+  profitFactor: { title: 'Profit factor', render: (c) => <StatCard label="Profit factor" value={num(c.stats.profitFactor)} hint="Gross profit ÷ gross loss. Above 1 is profitable." /> },
+  expectancy: { title: 'Expectancy', render: (c) => <StatCard label="Expectancy" value={formatMoney(c.stats.expectancy, { signed: true })} tone={c.stats.expectancy >= 0 ? 'profit' : 'danger'} hint="Average expected net PnL per trade." /> },
+  maxDrawdown: { title: 'Max drawdown', render: (c) => <StatCard label="Max drawdown" value={formatMoney(-c.stats.maxDrawdown)} tone="danger" sub={formatPct(c.stats.maxDrawdownPct)} hint="Largest peak-to-trough drop on the equity curve." /> },
+  balance: { title: 'Account balance', render: (c) => <StatCard label="Account balance" value={formatMoney(c.currentBalance)} sub={`${formatMoney(c.netDep, { signed: true })} net deposited`} hint="Starting balance + net deposits + realized PnL." /> },
+  trades: { title: 'Trades', render: (c) => <StatCard label="Trades" value={String(c.stats.totalTrades)} sub={`${c.stats.maxConsecWins}W / ${c.stats.maxConsecLosses}L streak`} hint="Closed round-trip trades in the current filter; longest win/loss streaks." /> },
+  avgTrade: { title: 'Avg trade', render: (c) => <StatCard label="Avg trade" value={formatMoney(c.stats.avgTrade, { signed: true })} tone={c.stats.avgTrade >= 0 ? 'profit' : 'danger'} hint="Average net PnL per closed trade." /> },
+  sharpe: { title: 'Sharpe', render: (c) => <StatCard label="Sharpe" value={num(c.stats.sharpe)} sub={`Sortino ${num(c.stats.sortino)}`} hint="Risk-adjusted return: mean daily PnL ÷ volatility, annualized." /> },
   equity: { title: 'Equity / balance curve', resizableH: true, render: (c, h) => <ChartCard title={c.hasCash ? 'Account balance (incl. deposits / withdrawals)' : 'Equity curve (cumulative net PnL)'} option={c.equityOption} height={h ?? 300} /> },
   statgrid: { title: 'Overall statistics', render: (c) => <StatGrid s={c.stats} /> },
   recent: { title: 'Recent trades', resizableH: true, render: (c, h) => <RecentTrades trades={c.recent} onPick={c.onPickTrade} height={h} /> },
@@ -72,6 +74,9 @@ export function Dashboard() {
   const includeFees = useSettings((s) => s.includeFees);
   const { mode, accent } = useTheme();
   const { items, setItems, toggle, setSize, reset } = useDashboard();
+  const currency = useSettings((s) => s.currency);
+  const eurUsd = useRates((s) => s.eurUsd);
+  const displayCcy: Currency = currency === 'EUR' ? 'EUR' : 'USD';
   const nav = useNavigate();
 
   const [editing, setEditing] = useState(false);
@@ -88,20 +93,22 @@ export function Dashboard() {
   itemsRef.current = items;
 
   const adjusted = useMemo(() => adjustCosts(all, { includeCommission, includeFees }), [all, includeCommission, includeFees]);
-  const trades = useMemo(() => applyFilters(adjusted, filters), [adjusted, filters]);
+  const converted = useMemo(() => convertTrades(adjusted, displayCcy, eurUsd), [adjusted, displayCcy, eurUsd]);
+  const trades = useMemo(() => applyFilters(converted, filters), [converted, filters]);
+  const cashFlowsCcy = useMemo(() => convertCashFlows(cashFlows, displayCcy, eurUsd), [cashFlows, displayCcy, eurUsd]);
   const stats = useMemo(() => computeOverallStats(trades, tz), [trades, tz]);
   const curve = useMemo(() => equityCurve(trades, tz), [trades, tz]);
 
   const startMinor = useMemo(() => toMinor(startingBalance), [startingBalance]);
-  const hasCash = startMinor > 0 || cashFlows.length > 0;
-  const netDep = useMemo(() => netDeposits(cashFlows), [cashFlows]);
-  const balance = useMemo(() => balanceCurve(trades, cashFlows, startMinor, tz), [trades, cashFlows, startMinor, tz]);
+  const hasCash = startMinor > 0 || cashFlowsCcy.length > 0;
+  const netDep = useMemo(() => netDeposits(cashFlowsCcy), [cashFlowsCcy]);
+  const balance = useMemo(() => balanceCurve(trades, cashFlowsCcy, startMinor, tz), [trades, cashFlowsCcy, startMinor, tz]);
   const currentBalance = startMinor + netDep + stats.netPnl;
   const recent = useMemo(() => [...trades].sort((a, b) => (b.closeDate ?? b.openDate).localeCompare(a.closeDate ?? a.openDate)).slice(0, 12), [trades]);
 
   const equityOption: EChartsOption = useMemo(() => {
     const points = hasCash ? balance.map((p) => ({ date: p.date, v: p.balance })) : curve.map((p) => ({ date: p.date, v: p.cumulative }));
-    const flows = flowByDay(cashFlows);
+    const flows = flowByDay(cashFlowsCcy);
     const markData = [...flows.values()]
       .filter((fd) => points.some((p) => p.date === fd.date))
       .map((fd) => ({
@@ -116,7 +123,7 @@ export function Dashboard() {
       series: [{ type: 'line', smooth: true, showSymbol: false, data: points.map((p) => toMajor(p.v)), areaStyle: { opacity: 0.18 }, lineStyle: { width: 2 }, markLine: markData.length ? { symbol: 'none', data: markData, silent: false } : undefined }],
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [curve, balance, cashFlows, hasCash, tz, mode, accent]);
+  }, [curve, balance, cashFlowsCcy, hasCash, tz, mode, accent]);
 
   // FLIP — runs only when the widget ORDER changes (and only for a reorder we
   // initiated, i.e. flipSnap was captured). Translate-only, so content never distorts.

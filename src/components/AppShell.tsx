@@ -8,6 +8,7 @@ import {
   IconDashboard,
   IconImport,
   IconMenu,
+  IconPositions,
   IconSettings,
   IconTable,
 } from './Icon';
@@ -19,6 +20,7 @@ const NAV = [
   { to: '/dashboard', label: 'Dashboard', Icon: IconDashboard },
   { to: '/calendar', label: 'Calendar', Icon: IconCalendar },
   { to: '/trades', label: 'Trades', Icon: IconTable },
+  { to: '/positions', label: 'Positions', Icon: IconPositions },
   { to: '/charts', label: 'Charts', Icon: IconChart },
   { to: '/import', label: 'Import', Icon: IconImport },
   { to: '/settings', label: 'Settings', Icon: IconSettings },

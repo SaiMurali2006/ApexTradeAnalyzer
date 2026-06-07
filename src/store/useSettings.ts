@@ -75,4 +75,5 @@ export const TIMEZONES = [
   'Australia/Sydney',
 ];
 
-export const CURRENCIES = ['USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'CHF', 'INR'];
+// Only USD/EUR are supported for live conversion (the daily EUR/USD rate).
+export const CURRENCIES = ['USD', 'EUR'];

@@ -6,6 +6,9 @@ import { useData } from '@/store/useData';
 import { applyFilters, useFilters } from '@/store/useFilters';
 import { byAsset, byDayOfWeek, byHour, bySymbol, bySymbolMagnitude, drawdownSeries, pnlHistogram, type Bucket } from '@/stats/breakdowns';
 import { adjustCosts } from '@/domain/costs';
+import { convertTrades } from '@/domain/currency';
+import { useRates } from '@/store/useRates';
+import type { Currency } from '@/domain/types';
 import { formatMoney, toMajor } from '@/domain/money';
 import { ChartCard } from '@/components/ChartCard';
 import { FilterBar } from '@/components/FilterBar';
@@ -54,7 +57,10 @@ export function Charts() {
   const tz = useSettings((s) => s.timezone);
   const includeCommission = useSettings((s) => s.includeCommission);
   const includeFees = useSettings((s) => s.includeFees);
-  const adjusted = useMemo(() => adjustCosts(all, { includeCommission, includeFees }), [all, includeCommission, includeFees]);
+  const currency = useSettings((s) => s.currency);
+  const eurUsd = useRates((s) => s.eurUsd);
+  const displayCcy: Currency = currency === 'EUR' ? 'EUR' : 'USD';
+  const adjusted = useMemo(() => convertTrades(adjustCosts(all, { includeCommission, includeFees }), displayCcy, eurUsd), [all, includeCommission, includeFees, displayCcy, eurUsd]);
   const trades = useMemo(() => applyFilters(adjusted, filters), [adjusted, filters]);
 
   // resolved palette — recomputed on theme change so canvas colors stay valid

@@ -13,6 +13,8 @@ import {
   putCashFlow,
   replaceTrades,
   wipeAll,
+  wipeCashFlowsData,
+  wipeTradesData,
 } from './db';
 
 interface DataState {
@@ -24,6 +26,8 @@ interface DataState {
   commitExecutions: (execs: Execution[]) => Promise<number>;
   addCashFlow: (cf: CashFlow) => Promise<void>;
   removeCashFlow: (id: string) => Promise<void>;
+  wipeTrades: () => Promise<void>;
+  wipeCashFlows: () => Promise<void>;
   wipe: () => Promise<void>;
 }
 
@@ -56,6 +60,14 @@ export const useData = create<DataState>((set) => ({
   removeCashFlow: async (id) => {
     await deleteCashFlow(id);
     set({ cashFlows: await allCashFlows() });
+  },
+  wipeTrades: async () => {
+    await wipeTradesData();
+    set({ trades: [] });
+  },
+  wipeCashFlows: async () => {
+    await wipeCashFlowsData();
+    set({ cashFlows: [] });
   },
   wipe: async () => {
     await wipeAll();

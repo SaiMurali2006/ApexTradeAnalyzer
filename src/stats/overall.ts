@@ -34,7 +34,6 @@ export interface OverallStats {
   calmar: number;
   omega: number;
   recoveryFactor: number;
-  cagrLike: number;
   // volatility & drawdown
   maxDrawdown: number;
   maxDrawdownPct: number;
@@ -139,7 +138,6 @@ export function computeOverallStats(input: Trade[], tz: string = DEFAULT_TZ): Ov
     calmar: dd.maxDrawdown > 0 ? netPnl / dd.maxDrawdown : 0,
     omega: negSumAbs > 0 ? posSum / negSumAbs : 0,
     recoveryFactor: dd.maxDrawdown > 0 ? netPnl / dd.maxDrawdown : 0,
-    cagrLike: 0, // needs starting balance; filled by dashboard when available
     maxDrawdown: dd.maxDrawdown,
     maxDrawdownPct: dd.maxDrawdownPct,
     stdDevPnl: stdDev(pnls),

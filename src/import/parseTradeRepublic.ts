@@ -64,6 +64,7 @@ export function parseTradeRepublic(text: string, account = 'Trade Republic'): Pa
       price: toMinor(price),
       commission: toMinor(Math.abs(Number(row.fee) || 0)),
       fees: toMinor(Math.abs(Number(row.tax) || 0)),
+      currency: 'EUR',
       raw: row,
     });
   }

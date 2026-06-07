@@ -16,13 +16,14 @@ interface StatCardProps {
   value: ReactNode;
   sub?: ReactNode;
   tone?: 'default' | 'profit' | 'danger';
+  hint?: string; // hover explanation
 }
 
-export function StatCard({ label, value, sub, tone = 'default' }: StatCardProps) {
+export function StatCard({ label, value, sub, tone = 'default', hint }: StatCardProps) {
   const color = tone === 'profit' ? 'var(--profit)' : tone === 'danger' ? 'var(--danger)' : 'var(--text)';
   return (
-    <Card hover className="apex-statcard">
-      <div className="apex-statcard__label">{label}</div>
+    <Card hover className="apex-statcard" title={hint}>
+      <div className={`apex-statcard__label ${hint ? 'is-hinted' : ''}`}>{label}</div>
       {/* keyed on value so it replays the refresh pulse when the number changes */}
       <div key={String(value)} className="apex-statcard__value mono" style={{ color }}>{value}</div>
       {sub != null && <div className="apex-statcard__sub mono">{sub}</div>}
