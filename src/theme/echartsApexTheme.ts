@@ -1,6 +1,8 @@
 // ECharts theme driven by live CSS tokens (CLAUDE.md §6.11).
 // Read fresh on each build so charts follow mode/accent swaps.
-import * as echarts from 'echarts';
+// Use the tree-shaken core instance so registerTheme targets the same registry
+// the charts render with.
+import { echarts } from './echartsCore';
 
 function tok(name: string): string {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim();

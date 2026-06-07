@@ -20,3 +20,8 @@
 .apex-table tbody tr:hover { background: var(--card-hover); }
 .apex-table td.long { color: var(--profit); text-transform: capitalize; }
 .apex-table td.short { color: var(--danger); text-transform: capitalize; }
+
+/* virtual-scroll spacer rows: pure height, no padding/border/hover */
+.apex-table tbody tr[aria-hidden] { cursor: default; }
+.apex-table tbody tr[aria-hidden]:hover { background: transparent; }
+.apex-table tbody tr[aria-hidden] td { padding: 0; border: none; }

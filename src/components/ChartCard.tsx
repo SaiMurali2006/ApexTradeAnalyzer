@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from 'react';
-import ReactECharts from 'echarts-for-react';
+import ReactEChartsCore from 'echarts-for-react/lib/core';
 import type { EChartsOption } from 'echarts';
+import { echarts } from '@/theme/echartsCore';
 import { useTheme } from '@/theme/ThemeProvider';
 import { APEX_THEME, ensureApexTheme, refreshApexTheme } from '@/theme/echartsApexTheme';
 import { Card } from './Card';
@@ -42,7 +43,7 @@ export function ChartCard({ title, option, height = 300, events }: Props) {
           {title}
         </div>
       )}
-      <ReactECharts key={key} theme={APEX_THEME} option={option} style={{ height }} notMerge lazyUpdate onEvents={events} />
+      <ReactEChartsCore echarts={echarts} key={key} theme={APEX_THEME} option={option} style={{ height }} notMerge lazyUpdate onEvents={events} />
     </Card>
   );
 }
