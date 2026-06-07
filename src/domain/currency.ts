@@ -2,7 +2,7 @@
 // units + a `currency` tag; views convert everything to the chosen display currency
 // using the daily rate so mixed-broker data (USD .tlg + EUR Trade Republic) aggregates
 // correctly. Undefined currency is treated as USD (legacy rows).
-import type { CashFlow, Currency, Trade } from './types';
+import type { CashFlow, Currency, Position, Trade } from './types';
 
 const ccy = (c?: Currency): Currency => c ?? 'USD';
 
@@ -42,6 +42,12 @@ export function convertTrade(t: Trade, to: Currency, eurUsd: number): Trade {
 export function convertTrades(trades: Trade[], to: Currency, eurUsd: number): Trade[] {
   if (trades.every((t) => ccy(t.currency) === to)) return trades;
   return trades.map((t) => convertTrade(t, to, eurUsd));
+}
+
+/** Convert open-position cost basis to `to`. qty/multiplier are currency-agnostic. */
+export function convertPositions(positions: Position[], to: Currency, eurUsd: number): Position[] {
+  if (positions.every((p) => ccy(p.currency) === to)) return positions;
+  return positions.map((p) => ({ ...p, avgEntry: convertMinor(p.avgEntry, p.currency, to, eurUsd), currency: to }));
 }
 
 // Each cash flow may lock its own rate (`eurUsd`) captured at entry time; fall back to

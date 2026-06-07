@@ -7,13 +7,19 @@
 //
 // Date and time are SEPARATE columns. Action is explicit in col 5 (BUYTOOPEN/SELLTOCLOSE/...).
 // Reversals are left for reconstructTrades to split via position overshoot — emit one exec per fill.
-import type { AssetType, Execution } from '@/domain/types';
+import type { AssetType, Execution, Position } from '@/domain/types';
 import { toMinor } from '@/domain/money';
 
 export interface ParseResult {
   executions: Execution[];
   warnings: string[];
+  // Broker-reported open positions (.tlg LOT section). Undefined for sources that
+  // don't carry a position snapshot (CSV / Trade Republic).
+  positions?: Position[];
 }
+
+// Open-lot rows: STK_LOT|account|symbol|desc|ccy|date|time|signedQty|mult|costPrice|value|fx
+const LOT = { account: 1, symbol: 2, date: 5, time: 6, qty: 7, mult: 8, price: 9 } as const;
 
 const COL = {
   id: 1,
@@ -61,13 +67,60 @@ function actionFromCols(actionCell: string, shares: number): Execution['action']
 
 let tlgSeq = 0;
 
+// Accumulate open lots per account+symbol (a symbol can have several lots).
+interface LotAcc {
+  account: string;
+  symbol: string;
+  assetType: AssetType;
+  qty: number; // signed sum
+  absQtyPrice: number; // Σ |qty|·price for the weighted-average cost
+  absQty: number; // Σ |qty|
+  multiplier: number;
+  openDate: string | null;
+}
+
 export function parseTlg(text: string, account = 'IB'): ParseResult {
   const warnings: string[] = [];
   const executions: Execution[] = [];
+  const lots = new Map<string, LotAcc>();
 
   for (const line of text.split(/\r?\n/)) {
     if (!line.trim()) continue;
     const cells = line.split('|');
+
+    // Open-position lots (authoritative snapshot). Parse before the execution guard —
+    // LOT rows have only ~12 columns and a different layout from trade rows.
+    const recType = (cells[0] ?? '').toUpperCase();
+    if (recType.endsWith('_LOT')) {
+      const asset = sectionAsset(recType);
+      const sym = cells[LOT.symbol]?.trim();
+      const qty = Number(cells[LOT.qty]);
+      const price = Number(cells[LOT.price]);
+      if (!asset || !sym || !Number.isFinite(qty) || qty === 0 || !Number.isFinite(price)) continue;
+      const acct = cells[LOT.account]?.trim() || account;
+      const key = `${acct}|${asset}|${sym}`;
+      const cur = lots.get(key);
+      const openDate = combineDateTime(cells[LOT.date] ?? '', cells[LOT.time] ?? '');
+      if (cur) {
+        cur.qty += qty;
+        cur.absQtyPrice += Math.abs(qty) * price;
+        cur.absQty += Math.abs(qty);
+        if (cur.openDate === null) cur.openDate = openDate;
+      } else {
+        lots.set(key, {
+          account: acct,
+          symbol: sym,
+          assetType: asset,
+          qty,
+          absQtyPrice: Math.abs(qty) * price,
+          absQty: Math.abs(qty),
+          multiplier: Number(cells[LOT.mult]) || 1,
+          openDate,
+        });
+      }
+      continue;
+    }
+
     if (cells.length < 15) continue; // header sections / metadata / trailer
 
     const asset = sectionAsset(cells[0] ?? '');
@@ -104,5 +157,20 @@ export function parseTlg(text: string, account = 'IB'): ParseResult {
   if (executions.length === 0) {
     warnings.push('No trade rows found — is this an IB Third-Party TradeLog (.tlg)?');
   }
-  return { executions, warnings };
+
+  const positions: Position[] = [...lots.values()]
+    .filter((l) => l.qty !== 0 && l.absQty > 0)
+    .map((l) => ({
+      id: `${l.account}|${l.assetType}|${l.symbol}`,
+      account: l.account,
+      symbol: l.symbol,
+      assetType: l.assetType,
+      qty: l.qty,
+      avgEntry: toMinor(l.absQtyPrice / l.absQty),
+      multiplier: l.multiplier,
+      openDate: l.openDate,
+      currency: 'USD',
+    }));
+
+  return { executions, warnings, positions };
 }

@@ -32,6 +32,33 @@ describe('parseTlg', () => {
     expect(executions[0].action).toBe('sell');
     expect(warnings).toHaveLength(0);
   });
+
+  it('parses open-position LOT rows (broker snapshot), not as executions', () => {
+    // LOT layout: type|account|symbol|desc|ccy|date|time|signedQty|mult|costPrice|value|fx
+    const text = [
+      'STOCK_TRANSACTIONS',
+      row('1', 'AAPL', 'BUYTOOPEN', 'O', '20260414', '14:58:43', 54, 257.97, -1.0),
+      'STOCK_POSITIONS',
+      'STK_LOT|U12345678|MRVL|MARVELL TECHNOLOGY INC|USD||00:00:00|93.00|1.00|266.470003|24781.71|0.86',
+      'STK_LOT|U12345678|MRVL|MARVELL TECHNOLOGY INC|USD||00:00:00|7.00|1.00|310.63286|2174.43|0.86',
+      'OPTION_POSITIONS',
+      'OPT_LOT|U12345678|MRVL  260605C00290000|MRVL 05JUN26 290 C|USD||00:00:00|-1.00|100.00|10.449244|-1044.92|0.86',
+    ].join('\n');
+    const { executions, positions } = parseTlg(text);
+    expect(executions).toHaveLength(1); // LOT rows are NOT executions
+    expect(positions).toBeDefined();
+    expect(positions).toHaveLength(2); // MRVL stock (2 lots merged) + MRVL option
+
+    const mrvl = positions!.find((p) => p.assetType === 'stock')!;
+    expect(mrvl.symbol).toBe('MRVL');
+    expect(mrvl.qty).toBe(100); // 93 + 7
+    // weighted avg cost = (93*266.470003 + 7*310.63286)/100 ≈ 269.56 -> minor units
+    expect(mrvl.avgEntry).toBe(26956);
+
+    const opt = positions!.find((p) => p.assetType === 'option')!;
+    expect(opt.qty).toBe(-1); // short option (sign preserved)
+    expect(opt.multiplier).toBe(100);
+  });
 });
 
 describe('parseCsv', () => {

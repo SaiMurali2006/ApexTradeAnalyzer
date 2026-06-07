@@ -1,6 +1,6 @@
 // IndexedDB persistence via Dexie (CLAUDE.md §2). On-device only.
 import Dexie, { type Table } from 'dexie';
-import type { CashFlow, Execution, Trade } from '@/domain/types';
+import type { CashFlow, Execution, Position, Trade } from '@/domain/types';
 
 export interface StoredExecution extends Execution {
   hash: string; // dedupe key on re-import
@@ -17,6 +17,7 @@ class ApexDB extends Dexie {
   trades!: Table<Trade, string>;
   cashFlows!: Table<CashFlow, string>;
   rates!: Table<RateRow, string>;
+  positions!: Table<Position, string>;
 
   constructor() {
     super('apex-trade-analyzer');
@@ -40,6 +41,14 @@ class ApexDB extends Dexie {
       trades: 'id, symbol, account, assetType, openDate, closeDate',
       cashFlows: 'id, date, type, account',
       rates: 'date',
+    });
+    // v5: broker-reported open positions (.tlg LOT snapshot).
+    this.version(5).stores({
+      executions: 'hash, symbol, account, assetType, timestamp',
+      trades: 'id, symbol, account, assetType, openDate, closeDate',
+      cashFlows: 'id, date, type, account',
+      rates: 'date',
+      positions: 'id, account, symbol, assetType',
     });
   }
 }
@@ -82,6 +91,18 @@ export async function allTrades(): Promise<Trade[]> {
   return db.trades.orderBy('openDate').toArray();
 }
 
+export async function allPositions(): Promise<Position[]> {
+  return db.positions.toArray();
+}
+
+/** Replace the open-position snapshot (positions are authoritative, not accumulated). */
+export async function replacePositions(positions: Position[]): Promise<void> {
+  await db.transaction('rw', db.positions, async () => {
+    await db.positions.clear();
+    await db.positions.bulkPut(positions);
+  });
+}
+
 export async function allCashFlows(): Promise<CashFlow[]> {
   return db.cashFlows.orderBy('date').toArray();
 }
@@ -106,11 +127,12 @@ export async function getRate(date: string): Promise<RateRow | undefined> {
   return db.rates.get(date);
 }
 
-/** Clear executions + reconstructed trades (cash flows untouched). */
+/** Clear executions + reconstructed trades + open positions (cash flows untouched). */
 export async function wipeTradesData(): Promise<void> {
-  await db.transaction('rw', db.executions, db.trades, async () => {
+  await db.transaction('rw', db.executions, db.trades, db.positions, async () => {
     await db.executions.clear();
     await db.trades.clear();
+    await db.positions.clear();
   });
 }
 
@@ -121,9 +143,10 @@ export async function wipeCashFlowsData(): Promise<void> {
 
 /** Clear everything user-entered (trades + cash flows). Cached FX rates are kept as reference. */
 export async function wipeAll(): Promise<void> {
-  await db.transaction('rw', db.executions, db.trades, db.cashFlows, async () => {
+  await db.transaction('rw', db.executions, db.trades, db.cashFlows, db.positions, async () => {
     await db.executions.clear();
     await db.trades.clear();
     await db.cashFlows.clear();
+    await db.positions.clear();
   });
 }

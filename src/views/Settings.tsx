@@ -29,6 +29,7 @@ export function Settings() {
   const reload = useData((st) => st.load);
   const trades = useData((st) => st.trades);
   const cashFlows = useData((st) => st.cashFlows);
+  const positions = useData((st) => st.positions);
   const addCashFlow = useData((st) => st.addCashFlow);
   const removeCashFlow = useData((st) => st.removeCashFlow);
 
@@ -91,7 +92,7 @@ export function Settings() {
 
   const exportJson = useCallback(async () => {
     const [executions, rates] = await Promise.all([allExecutions(), allRates()]);
-    const blob = new Blob([JSON.stringify({ exportedAt: new Date().toISOString(), settings: { currency: s.currency, timezone: s.timezone, startingBalance: s.startingBalance }, executions, trades, cashFlows, rates }, null, 2)], {
+    const blob = new Blob([JSON.stringify({ exportedAt: new Date().toISOString(), settings: { currency: s.currency, timezone: s.timezone, startingBalance: s.startingBalance }, executions, trades, positions, cashFlows, rates }, null, 2)], {
       type: 'application/json',
     });
     const url = URL.createObjectURL(blob);
@@ -100,7 +101,7 @@ export function Settings() {
     a.download = `apex-export-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
-  }, [s.currency, s.timezone, s.startingBalance, trades, cashFlows]);
+  }, [s.currency, s.timezone, s.startingBalance, trades, positions, cashFlows]);
 
   const doWipe = useCallback(async (kind: 'trades' | 'cashflows' | 'all') => {
     if (kind === 'trades') await wipeTrades();

@@ -1,78 +1,70 @@
-// Open Positions: trades still open (position never returned to flat). Shows exposure
-// and per-position detail. Excluded from the realized-PnL stats on other views.
-import { useMemo, useState } from 'react';
+// Open Positions: the broker-reported snapshot (.tlg LOT section), NOT positions
+// derived from reconstructed trades. Shows cost-basis exposure per holding.
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '@/store/useData';
-import { applyFilters, useFilters } from '@/store/useFilters';
 import { useSettings } from '@/store/useSettings';
 import { useRates } from '@/store/useRates';
-import { adjustCosts } from '@/domain/costs';
-import { convertTrades } from '@/domain/currency';
-import { contractMultiplier } from '@/domain/multipliers';
+import { convertPositions } from '@/domain/currency';
 import { formatMoney, toMajor } from '@/domain/money';
-import type { Currency, Trade } from '@/domain/types';
+import type { Currency, Position } from '@/domain/types';
 import { Card, StatCard } from '@/components/Card';
 import { Button } from '@/components/Button';
 import { EmptyState } from '@/components/EmptyState';
-import { TradeDrawer } from '@/components/TradeDrawer';
-import { FilterBar } from '@/components/FilterBar';
 import { IconPositions } from '@/components/Icon';
 import { PageHeader } from './PageHeader';
 import './Trades.css';
 
 const DAY = 86_400_000;
 const fmtPrice = (minor: number) => toMajor(minor).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 });
-const heldDays = (iso: string) => Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / DAY));
-const exposureOf = (t: Trade) => Math.round(t.avgEntry * t.qty * contractMultiplier(t.assetType, t.symbol));
+const heldDays = (iso: string | null) => (iso ? Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / DAY)) : null);
+const exposureOf = (p: Position) => Math.round(p.avgEntry * Math.abs(p.qty) * p.multiplier);
 
 export function Positions() {
-  const all = useData((s) => s.trades);
-  const filters = useFilters();
-  const includeCommission = useSettings((s) => s.includeCommission);
-  const includeFees = useSettings((s) => s.includeFees);
+  const allPositions = useData((s) => s.positions);
+  const hasAnyTrades = useData((s) => s.trades.length > 0);
   const currency = useSettings((s) => s.currency);
   const eurUsd = useRates((s) => s.eurUsd);
   const displayCcy: Currency = currency === 'EUR' ? 'EUR' : 'USD';
   const nav = useNavigate();
-  const [active, setActive] = useState<Trade | null>(null);
 
-  const open = useMemo(() => {
-    const adjusted = convertTrades(adjustCosts(all, { includeCommission, includeFees }), displayCcy, eurUsd);
-    return applyFilters(adjusted, filters)
-      .filter((t) => t.isOpen)
-      .sort((a, b) => exposureOf(b) - exposureOf(a));
-  }, [all, includeCommission, includeFees, displayCcy, eurUsd, filters]);
+  const positions = useMemo(
+    () => convertPositions(allPositions, displayCcy, eurUsd).slice().sort((a, b) => exposureOf(b) - exposureOf(a)),
+    [allPositions, displayCcy, eurUsd],
+  );
 
-  const totalExposure = useMemo(() => open.reduce((s, t) => s + exposureOf(t), 0), [open]);
-  const longs = open.filter((t) => t.side === 'long').length;
-  const shorts = open.length - longs;
-  const avgHeld = open.length ? Math.round(open.reduce((s, t) => s + heldDays(t.openDate), 0) / open.length) : 0;
-
-  const hasAnyTrades = all.length > 0;
+  const totalExposure = useMemo(() => positions.reduce((s, p) => s + exposureOf(p), 0), [positions]);
+  const longs = positions.filter((p) => p.qty > 0).length;
+  const shorts = positions.length - longs;
+  const dated = positions.map((p) => heldDays(p.openDate)).filter((d): d is number => d !== null);
+  const avgHeld = dated.length ? Math.round(dated.reduce((s, d) => s + d, 0) / dated.length) : 0;
 
   return (
     <>
       <PageHeader
         eyebrow="Live"
         title="Open Positions"
-        actions={<span className="mono" style={{ color: 'var(--muted)' }}>{open.length} open</span>}
+        actions={<span className="mono" style={{ color: 'var(--muted)' }}>{positions.length} open</span>}
       />
-      <FilterBar />
 
-      {open.length === 0 ? (
+      {positions.length === 0 ? (
         <EmptyState
           icon={<IconPositions size={26} />}
           title={hasAnyTrades ? 'No open positions' : 'No data yet'}
-          body={hasAnyTrades ? 'All your trades are closed (flat). Open positions appear here when a position has not returned to flat.' : 'Import trades to track open positions.'}
+          body={
+            hasAnyTrades
+              ? 'This import had no open-position snapshot. Open positions come straight from the broker file (IB .tlg LOT section); CSV / Trade Republic exports don’t include one.'
+              : 'Import an IB .tlg file to see the open positions it reports.'
+          }
           action={hasAnyTrades ? undefined : <Button variant="primary" onClick={() => nav('/import')}>Import trades</Button>}
         />
       ) : (
         <>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 12, marginBottom: 12 }}>
-            <StatCard label="Open positions" value={String(open.length)} sub={`${longs} long / ${shorts} short`} hint="Trades whose position has not returned to flat." />
-            <StatCard label="Total exposure" value={formatMoney(totalExposure)} sub="entry cost basis" hint="Sum of entry cost basis (avg entry × qty × multiplier). Not live market value — the app has no quote feed." />
-            <StatCard label="Avg held" value={`${avgHeld}d`} hint="Average days each open position has been held." />
-            <StatCard label="Symbols" value={String(new Set(open.map((t) => t.symbol)).size)} hint="Distinct symbols among open positions." />
+            <StatCard label="Open positions" value={String(positions.length)} sub={`${longs} long / ${shorts} short`} hint="Holdings reported open by the broker at export time." />
+            <StatCard label="Total exposure" value={formatMoney(totalExposure)} sub="cost basis" hint="Sum of cost basis (avg cost × qty × multiplier). Not live market value — the app has no quote feed." />
+            <StatCard label="Avg held" value={dated.length ? `${avgHeld}d` : '—'} hint="Average days held, for positions whose open date the broker provided." />
+            <StatCard label="Symbols" value={String(new Set(positions.map((p) => p.symbol)).size)} hint="Distinct symbols held." />
           </div>
 
           <Card style={{ padding: 0, overflow: 'hidden' }}>
@@ -83,7 +75,7 @@ export function Positions() {
                     <th>Symbol</th>
                     <th>Side</th>
                     <th className="num">Qty</th>
-                    <th className="num">Avg entry</th>
+                    <th className="num">Avg cost</th>
                     <th className="num">Exposure</th>
                     <th>Opened</th>
                     <th className="num">Held</th>
@@ -91,26 +83,27 @@ export function Positions() {
                   </tr>
                 </thead>
                 <tbody>
-                  {open.map((t) => (
-                    <tr key={t.id} onClick={() => setActive(t)}>
-                      <td>{t.symbol}</td>
-                      <td className={t.side === 'long' ? 'long' : 'short'}>{t.side}</td>
-                      <td className="num">{t.qty}</td>
-                      <td className="num">{fmtPrice(t.avgEntry)}</td>
-                      <td className="num">{formatMoney(exposureOf(t))}</td>
-                      <td>{t.openDate.slice(0, 10)}</td>
-                      <td className="num">{heldDays(t.openDate)}d</td>
-                      <td>{t.account}</td>
-                    </tr>
-                  ))}
+                  {positions.map((p) => {
+                    const held = heldDays(p.openDate);
+                    return (
+                      <tr key={p.id}>
+                        <td>{p.symbol}</td>
+                        <td className={p.qty > 0 ? 'long' : 'short'}>{p.qty > 0 ? 'long' : 'short'}</td>
+                        <td className="num">{Math.abs(p.qty)}</td>
+                        <td className="num">{fmtPrice(p.avgEntry)}</td>
+                        <td className="num">{formatMoney(exposureOf(p))}</td>
+                        <td>{p.openDate ? p.openDate.slice(0, 10) : '—'}</td>
+                        <td className="num">{held === null ? '—' : `${held}d`}</td>
+                        <td>{p.account}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
           </Card>
         </>
       )}
-
-      <TradeDrawer trade={active} onClose={() => setActive(null)} />
     </>
   );
 }

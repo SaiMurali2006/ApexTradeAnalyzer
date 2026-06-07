@@ -19,6 +19,20 @@ export interface CashFlow {
   note?: string;
 }
 
+// Broker-reported open position (a snapshot at export time — NOT derived from fills).
+// IB .tlg STK_LOT/OPT_LOT/FUT_LOT rows; aggregated per account+symbol.
+export interface Position {
+  id: string;            // `${account}|${assetType}|${symbol}` (stable; snapshot replaces)
+  account: string;
+  symbol: string;
+  assetType: AssetType;
+  qty: number;           // signed: + long, − short
+  avgEntry: number;      // minor units, cost basis per unit
+  multiplier: number;    // contract multiplier reported by the broker
+  openDate: string | null; // UTC ISO; null when the broker omits it
+  currency?: Currency;
+}
+
 export interface Execution {
   id: string;
   symbol: string;

@@ -45,8 +45,12 @@ export function Import() {
 
   const doCommit = useCallback(async () => {
     if (!preview) return;
-    const added = await commit(preview.parse.executions);
-    setStatus(`Imported ${added} new execution(s) from ${preview.fileName}. ${preview.trades.length} trade(s) reconstructed.`);
+    const added = await commit(preview.parse.executions, preview.parse.positions);
+    const pos = preview.parse.positions?.length ?? 0;
+    setStatus(
+      `Imported ${added} new execution(s) from ${preview.fileName}. ${preview.trades.length} trade(s) reconstructed` +
+        (pos > 0 ? `, ${pos} open position(s) recorded.` : '.'),
+    );
     setPreview(null);
   }, [preview, commit]);
 
@@ -91,6 +95,7 @@ export function Import() {
           <div style={{ display: 'flex', gap: 18, color: 'var(--muted)', fontWeight: 700, marginBottom: 12 }}>
             <span className="mono">{preview.parse.executions.length} executions</span>
             <span className="mono">{preview.trades.length} trades</span>
+            {(preview.parse.positions?.length ?? 0) > 0 && <span className="mono">{preview.parse.positions!.length} open positions</span>}
           </div>
 
           {preview.parse.warnings.length > 0 && (
